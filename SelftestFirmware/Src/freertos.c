@@ -186,7 +186,7 @@ void bootTask(void const * argument)
 	termPutString("\r\n--- testing peripherals ---\r\n");
 	oledClear();
 
-//	testSDRAM();
+	testSDRAM();
 	testSDCARD();
 
 	termPutString("\n--- peripherals check done ---\r\n");
