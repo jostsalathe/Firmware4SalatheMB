@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>D:\Eigene Daten\STM32-Projekte\SelftestFirmware\\SelftestFirmware</ProjectName>
+<ProjectName>D:\Eigene Daten\STM32-Projekte\Firmware4SalatheMB\SelftestFirmware\\SelftestFirmware</ProjectName>
 <CMSIS>..\Drivers\CMSIS</CMSIS>
 <HAL_Driver>C:\Users\Jost Salathe\STM32Cube\Repository\STM32Cube_FW_F7_V1.8.0\Drivers\CMSIS</HAL_Driver>
 

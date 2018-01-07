@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -186,8 +186,8 @@ void bootTask(void const * argument)
 	termPutString("\r\n--- testing peripherals ---\r\n");
 	oledClear();
 
-	testSDRAM();
 	testSDCARD();
+//	testSDRAM();
 
 	termPutString("\n--- peripherals check done ---\r\n");
 
@@ -267,8 +267,6 @@ void testSDRAM() {
 	TEST_TYPE *dataW;
 	TEST_TYPE *dataR;
 
-	oledClear();
-
 	dataW = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
 	dataR = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
 	if (!dataW) {
@@ -313,14 +311,14 @@ void testSDRAM() {
 	termPutHex(err, 8);
 	termPutString(" errors on 0x");
 	termPutHex(tested, 8);
-	termPutString(" checks");
+	termPutString(" checks\r\n");
 	termPutString("-- SDRAM check done --\r\n");
 
 	if (err) {
 		oledPutString("not okay:\n ", OLED_RED);
-		oledPutHex(err*2, OLED_RED, 6);
+		oledPutHex(err*4, OLED_RED, 6);
 		oledPutString("h/", OLED_RED);
-		oledPutHex(tested*2, OLED_RED, 6);
+		oledPutHex(tested*4, OLED_RED, 6);
 		oledPutString("h\n", OLED_RED);
 	} else {
 		oledPutString("okay\n", OLED_GREEN);

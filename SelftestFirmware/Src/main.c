@@ -9,7 +9,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -51,6 +51,7 @@
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 #include "adc.h"
+#include "dma.h"
 #include "fatfs.h"
 #include "rng.h"
 #include "rtc.h"
@@ -117,6 +118,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_FMC_Init();
   MX_RNG_Init();

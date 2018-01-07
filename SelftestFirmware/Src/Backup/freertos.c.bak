@@ -186,8 +186,8 @@ void bootTask(void const * argument)
 	termPutString("\r\n--- testing peripherals ---\r\n");
 	oledClear();
 
-//	testSDRAM();
 	testSDCARD();
+	testSDRAM();
 
 	termPutString("\n--- peripherals check done ---\r\n");
 
@@ -313,14 +313,14 @@ void testSDRAM() {
 	termPutHex(err, 8);
 	termPutString(" errors on 0x");
 	termPutHex(tested, 8);
-	termPutString(" checks");
+	termPutString(" checks\r\n");
 	termPutString("-- SDRAM check done --\r\n");
 
 	if (err) {
 		oledPutString("not okay:\n ", OLED_RED);
-		oledPutHex(err*2, OLED_RED, 6);
+		oledPutHex(err*4, OLED_RED, 6);
 		oledPutString("h/", OLED_RED);
-		oledPutHex(tested*2, OLED_RED, 6);
+		oledPutHex(tested*4, OLED_RED, 6);
 		oledPutString("h\n", OLED_RED);
 	} else {
 		oledPutString("okay\n", OLED_GREEN);
