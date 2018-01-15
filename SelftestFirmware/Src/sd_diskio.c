@@ -363,6 +363,13 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 
 /* USER CODE BEGIN callbackSection */ 
 /* can be used to modify / following code or add new code */
+void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd){
+	BSP_SD_WriteCpltCallback();
+}
+
+void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd){
+	BSP_SD_ReadCpltCallback();
+}
 /* USER CODE END callbackSection */
 /**
   * @brief Tx Transfer completed callbacks

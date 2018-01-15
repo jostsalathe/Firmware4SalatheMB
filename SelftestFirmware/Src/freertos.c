@@ -178,11 +178,7 @@ void bootTask(void const * argument)
 	termPutString("platform for developing digital\r\n");
 	termPutString("     synthesizer modules\r\n");
 
-	vTaskDelayUntil(&xLastWakeTime, 2000);
-
 	oledClear();
-	oledPutString("press button to test peripherals...", OLED_GREEN);
-	while (!buttonFalling(ROTARYBUTTON0));
 	termPutString("\r\n--- testing peripherals ---\r\n");
 	oledClear();
 
@@ -278,7 +274,7 @@ void testSDRAM() {
 	oledPutString("SDRAM: ", OLED_GREEN);
 	if (!dataR) {
 		oledPutString("malloc\n failed", OLED_RED);
-		_Error_Handler("freertos.c", 282);
+		_Error_Handler(__FILE__, __LINE__);
 	}
 
 	termPutString("\n-- testing SDRAM --\r\n");
