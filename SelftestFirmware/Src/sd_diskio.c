@@ -108,34 +108,6 @@ const Diskio_drvTypeDef  SD_Driver =
 
 /* USER CODE BEGIN beforeFunctionSection */
 /* can be used to modify / undefine following code or add new code */
-
-//---This is a workaround for FatFS R0.12c with FreeRTOS on STM32CubeMX v4.23---
-// re-copy every time cubeMX generates new
-//DSTATUS SD_initialize(BYTE lun)
-//{
-//	Stat = STA_NOINIT;
-//	/*
-//	 * check that the kernel has been started before continuing
-//	 * as the osMessage API will fail otherwise
-//	 */
-//	if(osKernelRunning())
-//	{
-//		if(BSP_SD_Init() == MSD_OK)
-//		{
-//			Stat = SD_CheckStatus(lun);
-//		}
-//		/*
-//		 * if the SD is correctly initialized, create the operation queue
-//		 */
-//		if (Stat != STA_NOINIT)
-//		{
-//			osMessageQDef(SD_Queue, QUEUE_SIZE, uint16_t);
-//			SDQueueID = osMessageCreate (osMessageQ(SD_Queue), NULL);
-//		}
-//	}
-//	return Stat;
-//}
-
 /* USER CODE END beforeFunctionSection */
 
 /* Private functions ---------------------------------------------------------*/
@@ -159,19 +131,14 @@ static DSTATUS SD_CheckStatus(BYTE lun)
 DSTATUS SD_initialize(BYTE lun)
 {
 	Stat = STA_NOINIT;
-	/*
-	 * check that the kernel has been started before continuing
-	 * as the osMessage API will fail otherwise
-	 */
+	// check that the kernel has been started before continuing as the osMessage API will fail otherwise
 	if(osKernelRunning())
 	{
 		if(BSP_SD_Init() == MSD_OK)
 		{
 			Stat = SD_CheckStatus(lun);
 		}
-		/*
-		 * if the SD is correctly initialized, create the operation queue
-		 */
+		// if the SD is correctly initialized, create the operation queue
 		if (Stat != STA_NOINIT)
 		{
 			osMessageQDef(SD_Queue, QUEUE_SIZE, uint16_t);
@@ -193,6 +160,31 @@ DSTATUS SD_status(BYTE lun)
 
 /* USER CODE BEGIN beforeReadSection */
 /* can be used to modify previous code / undefine following code / add new code */
+
+//---This is a workaround for FatFS R0.12c with FreeRTOS on STM32CubeMX v4.23---
+// on rebuild by CubeMX replace the original function with this version:
+/*
+DSTATUS SD_initialize(BYTE lun)
+{
+	Stat = STA_NOINIT;
+	// check that the kernel has been started before continuing as the osMessage API will fail otherwise
+	if(osKernelRunning())
+	{
+		if(BSP_SD_Init() == MSD_OK)
+		{
+			Stat = SD_CheckStatus(lun);
+		}
+		// if the SD is correctly initialized, create the operation queue
+		if (Stat != STA_NOINIT)
+		{
+			osMessageQDef(SD_Queue, QUEUE_SIZE, uint16_t);
+			SDQueueID = osMessageCreate (osMessageQ(SD_Queue), NULL);
+		}
+	}
+	return Stat;
+}
+*/
+
 /* USER CODE END beforeReadSection */
 /**
   * @brief  Reads Sector(s)
@@ -363,13 +355,6 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 
 /* USER CODE BEGIN callbackSection */ 
 /* can be used to modify / following code or add new code */
-void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd){
-	BSP_SD_WriteCpltCallback();
-}
-
-void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd){
-	BSP_SD_ReadCpltCallback();
-}
 /* USER CODE END callbackSection */
 /**
   * @brief Tx Transfer completed callbacks
@@ -410,6 +395,16 @@ void BSP_SD_ReadCpltCallback()
 
 /* USER CODE BEGIN lastSection */ 
 /* can be used to modify / undefine previous code or add new code */
+
+//---This is a workaround for FatFS R0.12c with FreeRTOS on STM32CubeMX v4.23---
+// the original HAL_SD_Tx/RxCpltCallback functions did not correctly pass on to BSP_SDs callbacks.
+void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd){
+	BSP_SD_WriteCpltCallback();
+}
+void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd){
+	BSP_SD_ReadCpltCallback();
+}
+
 /* USER CODE END lastSection */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

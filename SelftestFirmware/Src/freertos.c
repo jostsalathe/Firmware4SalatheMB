@@ -149,11 +149,8 @@ void bootTask(void const * argument)
   MX_FATFS_Init();
 
   /* USER CODE BEGIN bootTask */
-	TickType_t xLastWakeTime;
 	LED_t led[NLEDS];
 	uint32_t i = 0;
-
-	xLastWakeTime = xTaskGetTickCount();
 
 	buttonSetup();
 	encSetup(&htim3, 0);
@@ -350,11 +347,12 @@ void testSDCARD() {
 			oledPutString("fail\n", OLED_GREEN);
 			termReportFSfail(fatRes);
 		} else {
+			TCHAR fileName[9] = {'t','e','s','t','.','t','x','t',0};
 			FIL testFile;
 			oledPutString("okay\n", OLED_GREEN);
 			termPutString(" success\r\ntry opening test.txt for writing operation\r\n");
 
-			fatRes = f_open(&testFile, (const TCHAR*) "test.txt", FA_CREATE_ALWAYS | FA_WRITE);
+			fatRes = f_open(&testFile, fileName, FA_CREATE_ALWAYS | FA_WRITE);
 			if (fatRes != FR_OK) {
 				termReportFSfail(fatRes);
 			} else {
@@ -371,19 +369,20 @@ void testSDCARD() {
 				} else {
 					termPutString(" success - closing file\r\ntry opening test.txt for reading operation\r\n");
 
-					fatRes = f_open(&testFile, (const TCHAR*) "test.txt", FA_READ);
+					fatRes = f_open(&testFile, fileName, FA_READ);
 					if (fatRes != FR_OK) {
 						termReportFSfail(fatRes);
 					} else {
-						uint8_t rText[12];
+						uint8_t rText[255] = {0};
 						UINT bytesRead = 0;
 						termPutString(" success\r\ntry reading from it");
 
-						fatRes = f_read(&testFile, rText, 11, &bytesRead);
+						fatRes = f_read(&testFile, rText, 255, &bytesRead);
 						if (fatRes != FR_OK) {
 							termReportFSfail(fatRes);
 						} else {
 							termPutString(" success - read: \"");
+							termPutString((char*) rText);
 							termPutString("\"\r\n");
 						}
 						f_close(&testFile);

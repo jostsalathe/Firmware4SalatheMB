@@ -149,11 +149,8 @@ void bootTask(void const * argument)
   MX_FATFS_Init();
 
   /* USER CODE BEGIN bootTask */
-	TickType_t xLastWakeTime;
 	LED_t led[NLEDS];
 	uint32_t i = 0;
-
-	xLastWakeTime = xTaskGetTickCount();
 
 	buttonSetup();
 	encSetup(&htim3, 0);
@@ -178,11 +175,7 @@ void bootTask(void const * argument)
 	termPutString("platform for developing digital\r\n");
 	termPutString("     synthesizer modules\r\n");
 
-	vTaskDelayUntil(&xLastWakeTime, 2000);
-
 	oledClear();
-	oledPutString("press button to test peripherals...", OLED_GREEN);
-	while (!buttonFalling(ROTARYBUTTON0));
 	termPutString("\r\n--- testing peripherals ---\r\n");
 	oledClear();
 
@@ -278,7 +271,7 @@ void testSDRAM() {
 	oledPutString("SDRAM: ", OLED_GREEN);
 	if (!dataR) {
 		oledPutString("malloc\n failed", OLED_RED);
-		_Error_Handler("freertos.c", 282);
+		_Error_Handler(__FILE__, __LINE__);
 	}
 
 	termPutString("\n-- testing SDRAM --\r\n");
@@ -354,36 +347,37 @@ void testSDCARD() {
 			oledPutString("fail\n", OLED_GREEN);
 			termReportFSfail(fatRes);
 		} else {
+			TCHAR fileName[9] = {'t','e','s','t','.','t','x','t',0};
 			FIL testFile;
 			oledPutString("okay\n", OLED_GREEN);
 			termPutString(" success\r\ntry opening test.txt for writing operation\r\n");
 
-			fatRes = f_open(&testFile, (const TCHAR*) "test.txt", FA_CREATE_ALWAYS | FA_WRITE);
+			fatRes = f_open(&testFile, fileName, /*FA_CREATE_ALWAYS |*/ FA_WRITE | FA_OPEN_APPEND);
 			if (fatRes != FR_OK) {
 				termReportFSfail(fatRes);
 			} else {
-				uint8_t wText[12] = "Hello world";
+				uint8_t wText[13] = "Hello world\n";
 				UINT bytesWritten = 0;
 				termPutString(" success\r\ntry writing \"");
 				termPutString((char *)wText);
 				termPutString("\" to it\r\n");
 
-				fatRes = f_write(&testFile, wText, 11, &bytesWritten);
+				fatRes = f_write(&testFile, wText, 12, &bytesWritten);
 				f_close(&testFile);
 				if (fatRes != FR_OK) {
 					termReportFSfail(fatRes);
 				} else {
 					termPutString(" success - closing file\r\ntry opening test.txt for reading operation\r\n");
 
-					fatRes = f_open(&testFile, (const TCHAR*) "test.txt", FA_READ);
+					fatRes = f_open(&testFile, fileName, FA_READ);
 					if (fatRes != FR_OK) {
 						termReportFSfail(fatRes);
 					} else {
-						uint8_t rText[12];
+						uint8_t rText[255];
 						UINT bytesRead = 0;
 						termPutString(" success\r\ntry reading from it");
 
-						fatRes = f_read(&testFile, rText, 11, &bytesRead);
+						fatRes = f_read(&testFile, rText, 255, &bytesRead);
 						if (fatRes != FR_OK) {
 							termReportFSfail(fatRes);
 						} else {
