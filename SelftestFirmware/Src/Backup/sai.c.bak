@@ -50,6 +50,7 @@
 #include "sai.h"
 
 #include "gpio.h"
+#include "DMA.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -57,6 +58,8 @@
 
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
+DMA_HandleTypeDef hdma_sai1_a;
+DMA_HandleTypeDef hdma_sai1_b;
 
 /* SAI1 init function */
 void MX_SAI1_Init(void)
@@ -77,7 +80,7 @@ void MX_SAI1_Init(void)
   }
 
   hsai_BlockB1.Instance = SAI1_Block_B;
-  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
   hsai_BlockB1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
@@ -126,6 +129,27 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* Peripheral DMA init*/
+    
+    hdma_sai1_a.Instance = DMA2_Stream1;
+    hdma_sai1_a.Init.Channel = DMA_CHANNEL_0;
+    hdma_sai1_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_sai1_a.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_sai1_a.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_sai1_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_sai1_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_sai1_a.Init.Mode = DMA_NORMAL;
+    hdma_sai1_a.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    hdma_sai1_a.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_sai1_a) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    /* Several peripheral DMA handle pointers point to the same DMA handle.
+     Be aware that there is only one stream to perform all the requested DMAs. */
+    __HAL_LINKDMA(hsai,hdmarx,hdma_sai1_a);
+    __HAL_LINKDMA(hsai,hdmatx,hdma_sai1_a);
     }
     if(hsai->Instance==SAI1_Block_B)
     {
@@ -155,6 +179,27 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     GPIO_InitStruct.Alternate = GPIO_AF6_SAI1;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
+    /* Peripheral DMA init*/
+    
+    hdma_sai1_b.Instance = DMA2_Stream0;
+    hdma_sai1_b.Init.Channel = DMA_CHANNEL_10;
+    hdma_sai1_b.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_sai1_b.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_sai1_b.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_sai1_b.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_sai1_b.Init.Mode = DMA_NORMAL;
+    hdma_sai1_b.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    hdma_sai1_b.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_sai1_b) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    /* Several peripheral DMA handle pointers point to the same DMA handle.
+     Be aware that there is only one stream to perform all the requested DMAs. */
+    __HAL_LINKDMA(hsai,hdmarx,hdma_sai1_b);
+    __HAL_LINKDMA(hsai,hdmatx,hdma_sai1_b);
     }
 }
 
@@ -180,6 +225,8 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_2);
 
+    HAL_DMA_DeInit(hsai->hdmarx);
+    HAL_DMA_DeInit(hsai->hdmatx);
     }
     if(hsai->Instance==SAI1_Block_B)
     {
@@ -199,6 +246,8 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 
     HAL_GPIO_DeInit(GPIOF, GPIO_PIN_8|GPIO_PIN_9);
 
+    HAL_DMA_DeInit(hsai->hdmarx);
+    HAL_DMA_DeInit(hsai->hdmatx);
     }
 }
 

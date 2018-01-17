@@ -30,5 +30,6 @@ void ledSet(LED_t *led){
 			dat >>= 2;
 		}
 	}
-	HAL_SPI_Transmit(hspiLED, LEDsData, NSDATA, 1000);
+	// transmission takes roughly 1/4 of a millisecond (266.24us of pure data)
+	HAL_SPI_Transmit(hspiLED, LEDsData, NSDATA, 1);
 }

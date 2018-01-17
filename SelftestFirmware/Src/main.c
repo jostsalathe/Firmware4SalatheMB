@@ -133,6 +133,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_USB_OTG_HS_USB_Init();
+  MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
 

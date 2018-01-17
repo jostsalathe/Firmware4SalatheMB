@@ -4,8 +4,8 @@
 #include "stm32f7xx_hal.h"
 
 //global variables and defines
-#define OFF_RED 1
-#define OFF_GREEN 0
+#define OFF_RED 0
+#define OFF_GREEN 1
 #define OFF_BLUE 2
 extern const uint8_t WS2812Bits[];
 #define NLEDS 8

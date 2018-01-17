@@ -225,7 +225,8 @@ void guiTask(void const * argument)
 		vTaskDelayUntil(&xLastWakeTime, 100); //100ms cycle time
 
 		if (buttonFalling(ROTARYBUTTON0)) {
-			encSet(0,8);
+			if (encValue(0) == 85) encSet(0, 170);
+			else encSet(0, 85);
 		}
 		uint16_t pos = encValue(0);
 		for (i = 0; i < 8; ++i) {
@@ -239,14 +240,10 @@ void guiTask(void const * argument)
 
 		oledCurHome();
 		oledPutInt(pos, OLED_GREEN, 5);
-		if (pos%4 == 0) {
-			oledPutChar('-', OLED_GREEN);
-		} else if (pos%4 == 1) {
-			oledPutChar('\\', OLED_GREEN);
-		} else if (pos%4 == 2) {
-			oledPutChar('|', OLED_GREEN);
+		if (loopCnt%2 == 0) {
+			oledPutChar('_', OLED_GREEN);
 		} else {
-			oledPutChar('/', OLED_GREEN);
+			oledPutChar(' ', OLED_GREEN);
 		}
 		++loopCnt;
 	}
@@ -375,7 +372,7 @@ void testSDCARD() {
 					} else {
 						uint8_t rText[255] = {0};
 						UINT bytesRead = 0;
-						termPutString(" success\r\ntry reading from it");
+						termPutString(" success\r\ntry reading from it\r\n");
 
 						fatRes = f_read(&testFile, rText, 255, &bytesRead);
 						if (fatRes != FR_OK) {
@@ -388,6 +385,15 @@ void testSDCARD() {
 						f_close(&testFile);
 					}
 				}
+			}
+			termPutString("try deleting test.txt\r\n");
+			fatRes = f_unlink(fileName);
+			if (fatRes == FR_NO_FILE || fatRes == FR_NO_PATH) {
+				termPutString(" no file to delete\r\n");
+			} else if (fatRes != FR_OK) {
+				termReportFSfail(fatRes);
+			} else {
+				termPutString(" success\r\n");
 			}
 		}
 	}
