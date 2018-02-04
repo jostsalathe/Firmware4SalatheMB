@@ -161,29 +161,6 @@ void oledPutString(char *s, uint16_t color){
 	}
 }
 
-void oledPutInt(uint32_t num, uint16_t color, uint8_t digits){
-	uint32_t devider = 1; // 1000000000 for 10 digits
-	uint32_t modulator = 1;
-	if (digits < 1) digits = 1;
-	else if (digits > 10) digits = 10;
-	for (; --digits > 0;)
-		devider *= 10;
-	modulator = devider;
-	oledPutChar(num/devider+'0', color);
-	for (devider/=10; devider>0; devider/=10) {
-		oledPutChar((num%modulator)/devider+'0', color);
-		modulator = devider;
-	}
-}
-
-void oledPutHex(uint32_t num, uint16_t color, uint8_t digits){
-	if (digits < 1) digits = 1;
-	else if (digits > 8) digits = 8;
-	while (digits>0) {
-		oledPutChar(hexDigits[(num>>(--digits*4)) & 0xF], color);
-	}
-}
-
 void oledSetup(SPI_HandleTypeDef* hspi, GPIO_TypeDef* dcGPIOx, uint16_t dcGPIOpin, GPIO_TypeDef* csGPIOx, uint16_t csGPIOpin){
 	oledDC_GPIOx = dcGPIOx;
 	oledDC_GPIO_Pin = dcGPIOpin;

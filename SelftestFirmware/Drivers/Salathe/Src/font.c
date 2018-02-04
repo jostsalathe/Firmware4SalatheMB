@@ -2,6 +2,32 @@
 
 const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
+char *uint2Str(uint32_t num, uint8_t digits, char *str){
+	uint8_t i;
+	if (digits < 1) digits = 1;
+	else if (digits > 10) digits = 10;
+	str[digits] = '\0';
+	--digits;
+	for (i = 0; i<=digits; ++i) {
+		str[digits-i] = num%10+'0';
+		num /= 10;
+	}
+	return str;
+}
+
+//TODO: more efficient to build string from right to left?
+char *hex2Str(uint32_t num, uint8_t digits, char *str){
+	uint8_t i = 0;
+	if (digits > 8) digits = 8;
+	while (digits>0) {
+		--digits;
+		str[i] = hexDigits[(num>>(digits*4)) & 0xF];
+		++i;
+	}
+	str[i] = '\0';
+	return str;
+}
+
 const uint8_t oledCharMap[FONT_NCHARS][FONT_BYTEPERCHAR] = {	// 5*8 pixel character, 1 column per byte, MSB=top LSB=bottom
 		//0x00 aka NUL
 {		0b11111111,

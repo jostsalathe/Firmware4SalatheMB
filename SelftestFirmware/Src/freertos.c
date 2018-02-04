@@ -53,6 +53,7 @@
 
 /* USER CODE BEGIN Includes */     
 #include <stdlib.h>
+#include <string.h>
 #include "stm32f7xx_hal.h"
 #include "adc.h"
 #include "fatfs.h"
@@ -73,6 +74,7 @@
 #include "leds.h"
 #include "oled.h"
 #include "term.h"
+#include "font.h"
 
 /* USER CODE END Includes */
 
@@ -81,10 +83,11 @@ osThreadId bootHandle;
 osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
-#define TEST_SIZE 0x1000 // 8192 byte for one row, 32768 for maximum heap usage
+#define TEST_SIZE 0x100 // 8192 byte for one row, 32768 for maximum heap usage
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
+uint8_t SD_Rdy;
 
 /* USER CODE END Variables */
 
@@ -100,6 +103,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 void testSDRAM();
 void testSDCARD();
 void termReportFSfail(FRESULT r);
+void logStr(FIL *file, char *s);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -110,6 +114,7 @@ void termReportFSfail(FRESULT r);
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 	booting = 1;
+	SD_Rdy = 0;
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -180,7 +185,7 @@ void bootTask(void const * argument)
 	oledClear();
 
 	testSDCARD();
-//	testSDRAM();
+	testSDRAM();
 
 	termPutString("\n--- peripherals check done ---\r\n");
 
@@ -239,7 +244,8 @@ void guiTask(void const * argument)
 		ledSet(led);
 
 		oledCurHome();
-		oledPutInt(pos, OLED_GREEN, 5);
+		char intBuf[6];
+		oledPutString(uint2Str(pos, 5, intBuf), OLED_GREEN);
 		if (loopCnt%2 == 0) {
 			oledPutChar('_', OLED_GREEN);
 		} else {
@@ -256,26 +262,50 @@ void testSDRAM() {
 	TEST_TYPE *addr;
 	TEST_TYPE *dataW;
 	TEST_TYPE *dataR;
+	FIL *log;
+	char hexBuf[9] = {'\0'};
 
 	dataW = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
 	dataR = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
-	if (!dataW) {
+	log = malloc(sizeof(FIL));
+	oledPutString("SDRAM: ", OLED_GREEN);
+	termPutString("\n-- testing SDRAM --\r\n");
+	if (!dataW || !dataR || !log) {
+		if (dataW) {
+			free(dataW);
+			dataW = 0;
+		}
 		if (dataR) {
 			free(dataR);
 			dataR = 0;
 		}
-	}
-	oledPutString("SDRAM: ", OLED_GREEN);
-	if (!dataR) {
+		if (log) {
+			free(log);
+			log = 0;
+		}
 		oledPutString("malloc\n failed", OLED_RED);
+		termPutString("ERROR: malloc failed!\r\nEntering Error handler...");
 		_Error_Handler(__FILE__, __LINE__);
 	}
 
-	termPutString("\n-- testing SDRAM --\r\n");
-	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr < (TEST_TYPE *) 0x6000FFFF/*SDRAM_END*/; addr += TEST_SIZE) {
-		termPutString("offset 0x");
-		termPutHex((uint32_t) addr, 8);
-		termPutString("\r\n");
+	if (SD_Rdy) {
+		FRESULT fRet;
+		TCHAR fName[12] = {'R','A','M','t','e','s','t','.','l','o','g',0};
+		fRet = f_open(log, fName, FA_CREATE_ALWAYS | FA_WRITE);
+		if (fRet != FR_OK) {
+			f_close(log);
+			free(log);
+			log = 0;
+		}
+	} else {
+		free(log);
+		log = 0;
+	}
+
+	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr < (TEST_TYPE *) SDRAM_ADDR+TEST_SIZE/*SDRAM_END*/; addr += TEST_SIZE) {
+		logStr(log, "offset 0x");
+		logStr(log, hex2Str((uint32_t) addr, 8, hexBuf));
+		logStr(log, "\r");
 		for (i = 0; i < TEST_SIZE; ++i) {
 //			uint32_t randNum = 0;
 //			HAL_RNG_GenerateRandomNumber(&hrng, &randNum);
@@ -284,31 +314,31 @@ void testSDRAM() {
 		while (HAL_SDRAM_Write_32b(&hsdram1, (uint32_t *) addr, dataW, TEST_SIZE));
 		while (HAL_SDRAM_Read_32b(&hsdram1, (uint32_t *) addr, dataR, TEST_SIZE));
 		for (i = 0; i < TEST_SIZE; ++i) {
+			logStr(log, "0x");
+			logStr(log, hex2Str((uint32_t) addr + i*sizeof(TEST_TYPE), 8, hexBuf));
+			logStr(log, ": 0x");
+			logStr(log, hex2Str(dataW[i], 8/*4*/, hexBuf));
+			logStr(log, "->0x");
+			logStr(log, hex2Str(dataR[i], 8/*4*/, hexBuf));
+			logStr(log, "\r");
 			if (dataW[i] != dataR[i]) {
-				termPutString("Error at 0x");
-				termPutHex((uint32_t) addr + i*sizeof(TEST_TYPE), 8);
-				termPutString(": 0x");
-				termPutHex(dataW[i], 8/*4*/);
-				termPutString("->0x");
-				termPutHex(dataR[i], 8/*4*/);
-				termPutString("\r\n");
 				++err;
 			}
 		}
 		tested += TEST_SIZE;
 	}
 	termPutString(" encountered 0x");
-	termPutHex(err, 8);
+	termPutString(hex2Str(err, 8, hexBuf));
 	termPutString(" errors on 0x");
-	termPutHex(tested, 8);
+	termPutString(hex2Str(tested, 8, hexBuf));
 	termPutString(" checks\r\n");
 	termPutString("-- SDRAM check done --\r\n");
 
 	if (err) {
 		oledPutString("not okay:\n ", OLED_RED);
-		oledPutHex(err*4, OLED_RED, 6);
+		oledPutString(hex2Str(err*4, 6, hexBuf), OLED_RED);
 		oledPutString("h/", OLED_RED);
-		oledPutHex(tested*4, OLED_RED, 6);
+		oledPutString(hex2Str(tested*4, 6, hexBuf), OLED_RED);
 		oledPutString("h\n", OLED_RED);
 	} else {
 		oledPutString("okay\n", OLED_GREEN);
@@ -316,6 +346,10 @@ void testSDRAM() {
 
 	free(dataW);
 	free(dataR);
+	if (log) {
+		f_close(log);
+		free(log);
+	}
 }
 
 void testSDCARD() {
@@ -341,12 +375,10 @@ void testSDCARD() {
 
 		fatRes = f_mount(&SDFatFS, (const TCHAR*) SDPath, 1);
 		if (fatRes != FR_OK) {
-			oledPutString("fail\n", OLED_GREEN);
 			termReportFSfail(fatRes);
 		} else {
 			TCHAR fileName[9] = {'t','e','s','t','.','t','x','t',0};
 			FIL testFile;
-			oledPutString("okay\n", OLED_GREEN);
 			termPutString(" success\r\ntry opening test.txt for writing operation\r\n");
 
 			fatRes = f_open(&testFile, fileName, FA_CREATE_ALWAYS | FA_WRITE);
@@ -378,7 +410,17 @@ void testSDCARD() {
 						if (fatRes != FR_OK) {
 							termReportFSfail(fatRes);
 						} else {
-							termPutString(" success - read: \"");
+							int i, mismatch = 0;
+							for (i = 0; i < bytesWritten; ++i)
+								if (rText[i] != wText[i])
+									++mismatch;
+							if(mismatch){
+								termPutString(" fail");
+							}else{
+								SD_Rdy = 1;
+								termPutString(" success");
+							}
+							termPutString(" - read: \"");
 							termPutString((char*) rText);
 							termPutString("\"\r\n");
 						}
@@ -398,12 +440,35 @@ void testSDCARD() {
 		}
 	}
 	termPutString("-- SD-CARD check done --\r\n");
+	if(SD_Rdy){
+		oledPutString("okay\n", OLED_GREEN);
+	}else{
+		oledPutString("fail\n", OLED_GREEN);
+	}
 }
 
 void termReportFSfail(FRESULT r) {
 	termPutString(" failed with error code (FRESULT) ");
-	termPutInt(r, 3);
+	char intBuf[4];
+	termPutString(uint2Str(r, 3, intBuf));
 	termPutString("\r\n");
+}
+
+void logStr(FIL *file, char *s){
+	if(!s) return;
+	if(file){
+		int i = 0, n = strlen(s);
+		WCHAR *str;
+		str = malloc(sizeof(WCHAR)*(n+1));
+		for (i = 0; i<n; ++i){
+			str[i] = ff_convert((WCHAR)s[i],1);
+		}
+		str[i] = '\0';
+		f_puts(str, file);
+		free(str);
+	}else{
+		termPutString(s);
+	}
 }
 
 /* USER CODE END Application */
