@@ -171,23 +171,23 @@ void bootTask(void const * argument)
 	}
 	ledSet(led);
 
-	termPutString("\r\n\nbooting... \r\n");
-	termPutString(" --.      |        |   |\r\n");
-	termPutString("|         |       -|-  |     /\r\n");
-	termPutString("'--   --  |    --  |   |--   --.\r\n");
-	termPutString("   | |  | |   |  | |   |  | |--'\r\n");
-	termPutString("'--' '--: '-' '--: '-' '  ' '--\r\n");
-	termPutString("platform for developing digital\r\n");
-	termPutString("     synthesizer modules\r\n");
+	termPutString("\r\rbooting... \r");
+	termPutString(" --.      |        |   |\r");
+	termPutString("|         |       -|-  |     /\r");
+	termPutString("'--   --  |    --  |   |--   --.\r");
+	termPutString("   | |  | |   |  | |   |  | |--'\r");
+	termPutString("'--' '--: '-' '--: '-' '  ' '--\r");
+	termPutString("platform for developing digital\r");
+	termPutString("     synthesizer modules\r");
 
 	oledClear();
-	termPutString("\r\n--- testing peripherals ---\r\n");
+	termPutString("\r--- testing peripherals ---\r");
 	oledClear();
 
 	testSDCARD();
 	testSDRAM();
 
-	termPutString("\n--- peripherals check done ---\r\n");
+	termPutString("\r--- peripherals check done ---\r");
 
 	oledPutString("press button to continue...", OLED_GREEN);
 	while (!buttonFalling(ROTARYBUTTON0));
@@ -269,7 +269,7 @@ void testSDRAM() {
 	dataR = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
 	log = malloc(sizeof(FIL));
 	oledPutString("SDRAM: ", OLED_GREEN);
-	termPutString("\n-- testing SDRAM --\r\n");
+	termPutString("\r-- testing SDRAM --\r");
 	if (!dataW || !dataR || !log) {
 		if (dataW) {
 			free(dataW);
@@ -284,7 +284,7 @@ void testSDRAM() {
 			log = 0;
 		}
 		oledPutString("malloc\n failed", OLED_RED);
-		termPutString("ERROR: malloc failed!\r\nEntering Error handler...");
+		termPutString("ERROR: malloc failed!\rEntering Error handler...");
 		_Error_Handler(__FILE__, __LINE__);
 	}
 
@@ -331,8 +331,8 @@ void testSDRAM() {
 	termPutString(hex2Str(err, 8, hexBuf));
 	termPutString(" errors on 0x");
 	termPutString(hex2Str(tested, 8, hexBuf));
-	termPutString(" checks\r\n");
-	termPutString("-- SDRAM check done --\r\n");
+	termPutString(" checks\r");
+	termPutString("-- SDRAM check done --\r");
 
 	if (err) {
 		oledPutString("not okay:\n ", OLED_RED);
@@ -354,24 +354,24 @@ void testSDRAM() {
 
 void testSDCARD() {
 	oledPutString("SDCARD: ", OLED_GREEN);
-	termPutString("\n-- testing SD-Card --\r\n");
+	termPutString("\r-- testing SD-Card --\r");
 
 	retSD = BSP_SD_Init();
 	if (retSD == MSD_ERROR_SD_NOT_PRESENT) {
 		oledPutString("notFound\n", OLED_RED);
-		termPutString("no SD-Card in the slot\r\n");
+		termPutString("no SD-Card in the slot\r");
 	} else if (retSD != MSD_OK) {
 		oledPutString("not okay\n", OLED_RED);
-		termPutString("encountered an error during initialization of SD-Card\r\n");
+		termPutString("encountered an error during initialization of SD-Card\r");
 	} else {
 		FRESULT fatRes = FR_OK;
 		oledPutString("okay\n mnt to ", OLED_GREEN);
 		oledPutString(SDPath, OLED_GREEN);
 		oledPutString(" ", OLED_GREEN);
 
-		termPutString("found and initialized SD-Card\r\nmount SD-CARD to \"");
+		termPutString("found and initialized SD-Card\rmount SD-CARD to \"");
 		termPutString(SDPath);
-		termPutString("\":\r\n");
+		termPutString("\":\r");
 
 		fatRes = f_mount(&SDFatFS, (const TCHAR*) SDPath, 1);
 		if (fatRes != FR_OK) {
@@ -379,7 +379,7 @@ void testSDCARD() {
 		} else {
 			TCHAR fileName[9] = {'t','e','s','t','.','t','x','t',0};
 			FIL testFile;
-			termPutString(" success\r\ntry opening test.txt for writing operation\r\n");
+			termPutString(" success\rtry opening test.txt for writing operation\r");
 
 			fatRes = f_open(&testFile, fileName, FA_CREATE_ALWAYS | FA_WRITE);
 			if (fatRes != FR_OK) {
@@ -387,16 +387,16 @@ void testSDCARD() {
 			} else {
 				uint8_t wText[12] = "Hello world";
 				UINT bytesWritten = 0;
-				termPutString(" success\r\ntry writing \"");
+				termPutString(" success\rtry writing \"");
 				termPutString((char *)wText);
-				termPutString("\" to it\r\n");
+				termPutString("\" to it\r");
 
 				fatRes = f_write(&testFile, wText, 11, &bytesWritten);
 				f_close(&testFile);
 				if (fatRes != FR_OK) {
 					termReportFSfail(fatRes);
 				} else {
-					termPutString(" success - closing file\r\ntry opening test.txt for reading operation\r\n");
+					termPutString(" success - closing file\rtry opening test.txt for reading operation\r");
 
 					fatRes = f_open(&testFile, fileName, FA_READ);
 					if (fatRes != FR_OK) {
@@ -404,7 +404,7 @@ void testSDCARD() {
 					} else {
 						uint8_t rText[255] = {0};
 						UINT bytesRead = 0;
-						termPutString(" success\r\ntry reading from it\r\n");
+						termPutString(" success\rtry reading from it\r");
 
 						fatRes = f_read(&testFile, rText, 255, &bytesRead);
 						if (fatRes != FR_OK) {
@@ -422,24 +422,24 @@ void testSDCARD() {
 							}
 							termPutString(" - read: \"");
 							termPutString((char*) rText);
-							termPutString("\"\r\n");
+							termPutString("\"\r");
 						}
 						f_close(&testFile);
 					}
 				}
 			}
-			termPutString("try deleting test.txt\r\n");
+			termPutString("try deleting test.txt\r");
 			fatRes = f_unlink(fileName);
 			if (fatRes == FR_NO_FILE || fatRes == FR_NO_PATH) {
-				termPutString(" no file to delete\r\n");
+				termPutString(" no file to delete\r");
 			} else if (fatRes != FR_OK) {
 				termReportFSfail(fatRes);
 			} else {
-				termPutString(" success\r\n");
+				termPutString(" success\r");
 			}
 		}
 	}
-	termPutString("-- SD-CARD check done --\r\n");
+	termPutString("-- SD-CARD check done --\r");
 	if(SD_Rdy){
 		oledPutString("okay\n", OLED_GREEN);
 	}else{
@@ -451,7 +451,7 @@ void termReportFSfail(FRESULT r) {
 	termPutString(" failed with error code (FRESULT) ");
 	char intBuf[4];
 	termPutString(uint2Str(r, 3, intBuf));
-	termPutString("\r\n");
+	termPutString("\r");
 }
 
 void logStr(FIL *file, char *s){

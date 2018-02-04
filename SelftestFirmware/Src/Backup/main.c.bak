@@ -70,6 +70,7 @@
 #include "leds.h"
 #include "oled.h"
 #include "term.h"
+#include "font.h"
 
 /* USER CODE END Includes */
 
@@ -282,11 +283,12 @@ void _Error_Handler(char * file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
+	char intBuf[6];
 	oledPutString("\nFATAL ERROR", OLED_RED);
 	termPutString("\n--- FATAL ERROR in ");
 	termPutString(file);
 	termPutString(":");
-	termPutInt(line, 5);
+	termPutString(uint2Str(line, 5, intBuf));
 	termPutString(" ---");
 	while(1)
 	{
