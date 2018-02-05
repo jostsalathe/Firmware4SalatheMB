@@ -83,8 +83,8 @@ osThreadId bootHandle;
 osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
-//#define RAM_CHECK_FULL 1
-#define TEST_SIZE 0x100 // 8192 byte for one row, 32768 for maximum heap usage
+#define RAM_CHECK_FULL 1
+#define TEST_SIZE 0x2000 // 8192 byte for one row, 32768 for maximum heap usage
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
@@ -303,28 +303,33 @@ void testSDRAM() {
 	}
 
 #ifdef RAM_CHECK_FULL
-	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr < (TEST_TYPE *) SDRAM_ADDR+TEST_SIZE/*SDRAM_END*/; addr += TEST_SIZE) {
-		logStr(log, "offset 0x");
-		logStr(log, hex2Str((uint32_t) addr, 8, hexBuf));
-		logStr(log, "\r");
+	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) SDRAM_END+1; addr += TEST_SIZE) {
+		termPutString("offset 0x");
+		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
+		termPutString("\r");
 #endif
 		for (i = 0; i < TEST_SIZE; ++i) {
 #ifndef RAM_CHECK_FULL
-			uint32_t randNum = 0;
-			HAL_RNG_GenerateRandomNumber(&hrng, &randNum);
-			addrs[i] = (TEST_TYPE*)(((uint64_t)SDRAM_END-SDRAM_ADDR)*randNum/4294967296+SDRAM_ADDR);
+			uint64_t randNum = 0;
+			HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t *) &randNum);
+			randNum *= SDRAM_END-SDRAM_ADDR;
+			randNum /= 4294967295;
+			randNum /= 4;
+			randNum *= 4;
+			randNum += SDRAM_ADDR;
+			addrs[i] = (TEST_TYPE *) (uint32_t) randNum;
 #endif
 			dataW[i] = i%2?0x55555555:0xAAAAAAAA;//(TEST_TYPE) randNum;
 		}
 #ifdef RAM_CHECK_FULL
-		while (HAL_SDRAM_Write_32b(&hsdram1, (uint32_t *) addr, dataW, TEST_SIZE));
-		while (HAL_SDRAM_Read_32b(&hsdram1, (uint32_t *) addr, dataR, TEST_SIZE));
+		while (HAL_SDRAM_Write_32b(&hsdram1, addr, dataW, TEST_SIZE));
+		while (HAL_SDRAM_Read_32b(&hsdram1, addr, dataR, TEST_SIZE));
 #else
 		for (i = 0; i < TEST_SIZE; ++i) {
-			HAL_SDRAM_Write_32b(&hsdram1, (uint32_t *) addrs[i], dataW+i, 1);
+			HAL_SDRAM_Write_32b(&hsdram1, addrs[i], dataW+i, 1);
 		}
 		for (i = 0; i < TEST_SIZE; ++i) {
-			HAL_SDRAM_Read_32b(&hsdram1, (uint32_t *) addrs[i], dataR+i, 1);
+			HAL_SDRAM_Read_32b(&hsdram1, addrs[i], dataR+i, 1);
 		}
 #endif
 		for (i = 0; i < TEST_SIZE; ++i) {
