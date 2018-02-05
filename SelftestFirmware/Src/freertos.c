@@ -83,6 +83,7 @@ osThreadId bootHandle;
 osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
+//#define RAM_CHECK_FULL 1
 #define TEST_SIZE 0x100 // 8192 byte for one row, 32768 for maximum heap usage
 #define TEST_TYPE uint32_t
 
@@ -259,7 +260,11 @@ void guiTask(void const * argument)
 /* USER CODE BEGIN Application */
 void testSDRAM() {
 	uint32_t err = 0, tested = 0, i = 0;
+#ifdef RAM_CHECK_FULL
 	TEST_TYPE *addr;
+#else
+	TEST_TYPE **addrs;
+#endif
 	TEST_TYPE *dataW;
 	TEST_TYPE *dataR;
 	FIL *log;
@@ -267,22 +272,17 @@ void testSDRAM() {
 
 	dataW = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
 	dataR = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
+#ifndef RAM_CHECK_FULL
+	addrs = malloc(sizeof(TEST_TYPE *) * TEST_SIZE);
+#endif
 	log = malloc(sizeof(FIL));
 	oledPutString("SDRAM: ", OLED_GREEN);
 	termPutString("\r-- testing SDRAM --\r");
-	if (!dataW || !dataR || !log) {
-		if (dataW) {
-			free(dataW);
-			dataW = 0;
-		}
-		if (dataR) {
-			free(dataR);
-			dataR = 0;
-		}
-		if (log) {
-			free(log);
-			log = 0;
-		}
+	if (!dataW || !dataR
+#ifndef RAM_CHECK_FULL
+			|| !addrs
+#endif
+			|| !log) {
 		oledPutString("malloc\n failed", OLED_RED);
 		termPutString("ERROR: malloc failed!\rEntering Error handler...");
 		_Error_Handler(__FILE__, __LINE__);
@@ -302,31 +302,52 @@ void testSDRAM() {
 		log = 0;
 	}
 
+#ifdef RAM_CHECK_FULL
 	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr < (TEST_TYPE *) SDRAM_ADDR+TEST_SIZE/*SDRAM_END*/; addr += TEST_SIZE) {
 		logStr(log, "offset 0x");
 		logStr(log, hex2Str((uint32_t) addr, 8, hexBuf));
 		logStr(log, "\r");
+#endif
 		for (i = 0; i < TEST_SIZE; ++i) {
-//			uint32_t randNum = 0;
-//			HAL_RNG_GenerateRandomNumber(&hrng, &randNum);
+#ifndef RAM_CHECK_FULL
+			uint32_t randNum = 0;
+			HAL_RNG_GenerateRandomNumber(&hrng, &randNum);
+			addrs[i] = (TEST_TYPE*)(((uint64_t)SDRAM_END-SDRAM_ADDR)*randNum/4294967296+SDRAM_ADDR);
+#endif
 			dataW[i] = i%2?0x55555555:0xAAAAAAAA;//(TEST_TYPE) randNum;
 		}
+#ifdef RAM_CHECK_FULL
 		while (HAL_SDRAM_Write_32b(&hsdram1, (uint32_t *) addr, dataW, TEST_SIZE));
 		while (HAL_SDRAM_Read_32b(&hsdram1, (uint32_t *) addr, dataR, TEST_SIZE));
+#else
+		for (i = 0; i < TEST_SIZE; ++i) {
+			HAL_SDRAM_Write_32b(&hsdram1, (uint32_t *) addrs[i], dataW+i, 1);
+		}
+		for (i = 0; i < TEST_SIZE; ++i) {
+			HAL_SDRAM_Read_32b(&hsdram1, (uint32_t *) addrs[i], dataR+i, 1);
+		}
+#endif
 		for (i = 0; i < TEST_SIZE; ++i) {
 			logStr(log, "0x");
-			logStr(log, hex2Str((uint32_t) addr + i*sizeof(TEST_TYPE), 8, hexBuf));
+#ifdef RAM_CHECK_FULL
+			logStr(log, hex2Str((uint32_t) (addr + i), 8, hexBuf));
+#else
+			logStr(log, hex2Str((uint32_t) addrs[i], 8, hexBuf));
+#endif
 			logStr(log, ": 0x");
-			logStr(log, hex2Str(dataW[i], 8/*4*/, hexBuf));
+			logStr(log, hex2Str(dataW[i], sizeof(TEST_TYPE)*2, hexBuf));
 			logStr(log, "->0x");
-			logStr(log, hex2Str(dataR[i], 8/*4*/, hexBuf));
-			logStr(log, "\r");
+			logStr(log, hex2Str(dataR[i], sizeof(TEST_TYPE)*2, hexBuf));
 			if (dataW[i] != dataR[i]) {
 				++err;
+				logStr(log, " ERROR");
 			}
+			logStr(log, "\r");
 		}
 		tested += TEST_SIZE;
+#ifdef RAM_CHECK_FULL
 	}
+#endif
 	termPutString(" encountered 0x");
 	termPutString(hex2Str(err, 8, hexBuf));
 	termPutString(" errors on 0x");
