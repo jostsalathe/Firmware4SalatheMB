@@ -83,7 +83,7 @@ osThreadId bootHandle;
 osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
-#define RAM_CHECK_FULL 1
+#define RAM_CHECK_FULL
 #define TEST_SIZE 0x2000 // 8192 byte for one row, 32768 for maximum heap usage
 #define TEST_TYPE uint32_t
 
@@ -183,11 +183,11 @@ void bootTask(void const * argument)
 
 	oledClear();
 	termPutString("\r--- testing peripherals ---\r");
-	oledClear();
 
 	testSDCARD();
 	testSDRAM();
 
+	ledSet(led);
 	termPutString("\r--- peripherals check done ---\r");
 
 	oledPutString("press button to continue...", OLED_GREEN);
@@ -208,12 +208,12 @@ void guiTask(void const * argument)
 	LED_t ledColor, ledOff, led[NLEDS];
 	uint32_t i = 0, loopCnt = 0;
 
-	while (booting);
 	xLastWakeTime = xTaskGetTickCount();
+	while (booting) vTaskDelayUntil(&xLastWakeTime, 10);
 
-	ledColor.red = 10;
-	ledColor.green = 10;
-	ledColor.blue = 10;
+	ledColor.red = 255;//10;
+	ledColor.green = 255;//10;
+	ledColor.blue = 255;//10;
 	ledOff.red = 0;
 	ledOff.green = 0;
 	ledOff.blue = 0;
@@ -260,6 +260,8 @@ void guiTask(void const * argument)
 /* USER CODE BEGIN Application */
 void testSDRAM() {
 	uint32_t err = 0, tested = 0, i = 0;
+	LED_t off = {0x3F,0x0,0x3F};
+	LED_t on = {0x0,0x3F,0x0};
 #ifdef RAM_CHECK_FULL
 	TEST_TYPE *addr;
 #else
@@ -302,8 +304,10 @@ void testSDRAM() {
 		log = 0;
 	}
 
+	ledProgress(0.0, on, off);
 #ifdef RAM_CHECK_FULL
 	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) SDRAM_END+1; addr += TEST_SIZE) {
+		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(SDRAM_END-SDRAM_ADDR), on, off);
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
 		termPutString("\r");
@@ -325,18 +329,22 @@ void testSDRAM() {
 		while (HAL_SDRAM_Write_32b(&hsdram1, addr, dataW, TEST_SIZE));
 		while (HAL_SDRAM_Read_32b(&hsdram1, addr, dataR, TEST_SIZE));
 #else
+		ledProgress(0.125, on, off);
 		for (i = 0; i < TEST_SIZE; ++i) {
 			HAL_SDRAM_Write_32b(&hsdram1, addrs[i], dataW+i, 1);
 		}
 		for (i = 0; i < TEST_SIZE; ++i) {
 			HAL_SDRAM_Read_32b(&hsdram1, addrs[i], dataR+i, 1);
 		}
+		ledProgress(0.25, on, off);
 #endif
 		for (i = 0; i < TEST_SIZE; ++i) {
 			logStr(log, "0x");
 #ifdef RAM_CHECK_FULL
 			logStr(log, hex2Str((uint32_t) (addr + i), 8, hexBuf));
 #else
+			if ((i&0x1F)==0)
+				ledProgress((float) i/TEST_SIZE*0.75+0.25, on, off);
 			logStr(log, hex2Str((uint32_t) addrs[i], 8, hexBuf));
 #endif
 			logStr(log, ": 0x");
@@ -353,6 +361,7 @@ void testSDRAM() {
 #ifdef RAM_CHECK_FULL
 	}
 #endif
+	ledProgress(1.0, on, off);
 	termPutString(" encountered 0x");
 	termPutString(hex2Str(err, 8, hexBuf));
 	termPutString(" errors on 0x");

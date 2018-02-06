@@ -2,6 +2,8 @@
 #define _leds_H
 
 #include "stm32f7xx_hal.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 //global variables and defines
 #define OFF_RED 0
@@ -25,5 +27,7 @@ typedef struct{
 //function prototypes
 void ledSetup(SPI_HandleTypeDef *hspi);
 void ledSet(LED_t *led);
+void ledProgress(float progress, LED_t on, LED_t off);
+
 
 #endif
