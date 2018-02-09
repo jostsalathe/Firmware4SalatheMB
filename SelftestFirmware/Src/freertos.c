@@ -84,7 +84,8 @@ osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
 #define RAM_CHECK_FULL
-#define TEST_SIZE 0x2000 // 8192 byte for one row, 32768 for maximum heap usage
+#define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
+#define TEST_END 0x40000 //end the test right before this address offset
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
@@ -260,7 +261,7 @@ void guiTask(void const * argument)
 /* USER CODE BEGIN Application */
 void testSDRAM() {
 	uint32_t err = 0, tested = 0, i = 0;
-	LED_t off = {0x3F,0x0,0x3F};
+	LED_t off = {0x0,0x0,0x0};
 	LED_t on = {0x0,0x3F,0x0};
 #ifdef RAM_CHECK_FULL
 	TEST_TYPE *addr;
@@ -306,8 +307,8 @@ void testSDRAM() {
 
 	ledProgress(0.0, on, off);
 #ifdef RAM_CHECK_FULL
-	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) SDRAM_END+1; addr += TEST_SIZE) {
-		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(SDRAM_END-SDRAM_ADDR), on, off);
+	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) (TEST_END+SDRAM_ADDR); addr += TEST_SIZE) {
+		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_END), on, off);
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
 		termPutString("\r");
