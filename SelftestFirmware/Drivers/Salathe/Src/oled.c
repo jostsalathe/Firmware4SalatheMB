@@ -99,8 +99,21 @@ void oledPushPixels(uint16_t *color, uint16_t n){
 	free(transmission);
 }
 
+void oledPushPixeln(uint16_t color, uint16_t n){
+	uint8_t transmission[2];
+	uint16_t i;
+	transmission[0] = (uint8_t)(color>>8);
+	transmission[1] = (uint8_t)(color);
+	SSD1331_WRITE_DC(1);
+	SSD1331_WRITE_CS(0);
+	for(i=0; i<n; ++i){
+		HAL_SPI_Transmit(hspiOled, transmission, 2, 1000);
+	}
+	SSD1331_WRITE_CS(1);
+}
+
 void oledPushPixel(uint16_t color){
-	oledPushPixels(&color, 1);
+	oledPushPixeln(color, 1);
 }
 
 void oledPutChar(char c, uint16_t color){
@@ -225,11 +238,16 @@ void oledSetWindow(uint8_t xMin, uint8_t yMin, uint8_t xMax, uint8_t yMax){
 }
 
 void oledFillRectangel(uint8_t xMin, uint8_t yMin, uint8_t xMax, uint8_t yMax, uint16_t color) {
-	uint16_t n = (xMax-xMin+1) * (yMax-yMin+1), i;
 	oledSetWindow(xMin, yMin, xMax, yMax);
-	for (i = 0; i < n; ++i) {
-		oledPushPixel(color);
-	}
+	oledPushPixeln(color, (xMax-xMin+1) * (yMax-yMin+1));
+	oledSetWindow(0, 0, OLED_WIDTH-1, OLED_HEIGHT-1);
+}
+
+void oledProgress(float progress, uint16_t color) {
+	uint8_t progr = progress*(OLED_WIDTH);
+	oledFillRectangel(0, OLED_HEIGHT-1, OLED_WIDTH-1, OLED_HEIGHT-1, 0);
+	if(progr)
+		oledFillRectangel(0, OLED_HEIGHT-1, progr-1, OLED_HEIGHT-1, color);
 }
 
 void oledFillScreen(uint16_t color) {

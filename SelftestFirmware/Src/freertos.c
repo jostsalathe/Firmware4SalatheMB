@@ -85,7 +85,7 @@ osThreadId GUIHandle;
 /* USER CODE BEGIN Variables */
 #define RAM_CHECK_FULL
 #define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
-#define TEST_END 0x40000 //end the test right before this address offset
+#define TEST_END 0x4000//0 //end the test right before this address offset
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
@@ -306,9 +306,11 @@ void testSDRAM() {
 	}
 
 	ledProgress(0.0, on, off);
+	oledProgress(0.0, OLED_GREEN);
 #ifdef RAM_CHECK_FULL
 	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) (TEST_END+SDRAM_ADDR); addr += TEST_SIZE) {
 		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_END), on, off);
+		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_END), OLED_GREEN);
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
 		termPutString("\r");
@@ -331,6 +333,7 @@ void testSDRAM() {
 		while (HAL_SDRAM_Read_32b(&hsdram1, addr, dataR, TEST_SIZE));
 #else
 		ledProgress(0.125, on, off);
+		oledProgress(0.125, OLED_GREEN);
 		for (i = 0; i < TEST_SIZE; ++i) {
 			HAL_SDRAM_Write_32b(&hsdram1, addrs[i], dataW+i, 1);
 		}
@@ -338,6 +341,7 @@ void testSDRAM() {
 			HAL_SDRAM_Read_32b(&hsdram1, addrs[i], dataR+i, 1);
 		}
 		ledProgress(0.25, on, off);
+		oledProgress(0.25, OLED_GREEN);
 #endif
 		for (i = 0; i < TEST_SIZE; ++i) {
 			logStr(log, "0x");
@@ -363,6 +367,7 @@ void testSDRAM() {
 	}
 #endif
 	ledProgress(1.0, on, off);
+	oledProgress(1.0, OLED_GREEN);
 	termPutString(" encountered 0x");
 	termPutString(hex2Str(err, 8, hexBuf));
 	termPutString(" errors on 0x");
