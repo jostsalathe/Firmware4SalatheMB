@@ -84,8 +84,8 @@ osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
 #define RAM_CHECK_FULL
-#define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
-#define TEST_END 0x4000//0 //end the test right before this address offset
+#define TEST_SIZE 0x80//0 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
+#define TEST_END 0x40000 //end the test right before this address offset
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
@@ -212,9 +212,9 @@ void guiTask(void const * argument)
 	xLastWakeTime = xTaskGetTickCount();
 	while (booting) vTaskDelayUntil(&xLastWakeTime, 10);
 
-	ledColor.red = 255;//10;
-	ledColor.green = 255;//10;
-	ledColor.blue = 255;//10;
+	ledColor.red = 26;
+	ledColor.green = 26;
+	ledColor.blue = 26;
 	ledOff.red = 0;
 	ledOff.green = 0;
 	ledOff.blue = 0;

@@ -244,10 +244,10 @@ void oledFillRectangel(uint8_t xMin, uint8_t yMin, uint8_t xMax, uint8_t yMax, u
 }
 
 void oledProgress(float progress, uint16_t color) {
-	uint8_t progr = progress*(OLED_WIDTH);
-	oledFillRectangel(0, OLED_HEIGHT-1, OLED_WIDTH-1, OLED_HEIGHT-1, 0);
+	uint8_t progr = progress*(OLED_WIDTH-1);
+	oledFillRectangel(progr, OLED_HEIGHT-1, OLED_WIDTH-1, OLED_HEIGHT-1, 0);
 	if(progr)
-		oledFillRectangel(0, OLED_HEIGHT-1, progr-1, OLED_HEIGHT-1, color);
+		oledFillRectangel(0, OLED_HEIGHT-1, progr, OLED_HEIGHT-1, color);
 }
 
 void oledFillScreen(uint16_t color) {
