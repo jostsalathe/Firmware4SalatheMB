@@ -84,7 +84,7 @@ osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
 #define RAM_CHECK_FULL
-#define TEST_SIZE 0x80//0 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
+#define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
 #define TEST_END 0x40000 //end the test right before this address offset
 #define TEST_TYPE uint32_t
 
@@ -98,12 +98,14 @@ void bootTask(void const * argument);
 void guiTask(void const * argument);
 
 extern void MX_FATFS_Init(void);
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
 
 void testSDRAM();
 void testSDCARD();
+void testGPIO();
 void termReportFSfail(FRESULT r);
 void logStr(FIL *file, char *s);
 
@@ -155,6 +157,9 @@ void bootTask(void const * argument)
   /* init code for FATFS */
   MX_FATFS_Init();
 
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
+
   /* USER CODE BEGIN bootTask */
 	LED_t led[NLEDS];
 	uint32_t i = 0;
@@ -186,7 +191,8 @@ void bootTask(void const * argument)
 	termPutString("\r--- testing peripherals ---\r");
 
 	testSDCARD();
-	testSDRAM();
+//	testSDRAM();
+	testGPIO();
 
 	ledSet(led);
 	termPutString("\r--- peripherals check done ---\r");
@@ -486,6 +492,10 @@ void testSDCARD() {
 	}else{
 		oledPutString("fail\n", OLED_GREEN);
 	}
+}
+
+void testGPIO() {
+	;
 }
 
 void termReportFSfail(FRESULT r) {

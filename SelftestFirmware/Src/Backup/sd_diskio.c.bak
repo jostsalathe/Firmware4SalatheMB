@@ -130,7 +130,22 @@ static DSTATUS SD_CheckStatus(BYTE lun)
   */
 DSTATUS SD_initialize(BYTE lun)
 {
-  return SD_CheckStatus(lun);
+	Stat = STA_NOINIT;
+	// check that the kernel has been started before continuing as the osMessage API will fail otherwise
+	if(osKernelRunning())
+	{
+		if(BSP_SD_Init() == MSD_OK)
+		{
+			Stat = SD_CheckStatus(lun);
+		}
+		// if the SD is correctly initialized, create the operation queue
+		if (Stat != STA_NOINIT)
+		{
+			osMessageQDef(SD_Queue, QUEUE_SIZE, uint16_t);
+			SDQueueID = osMessageCreate (osMessageQ(SD_Queue), NULL);
+		}
+	}
+	return Stat;
 }
 
 /**

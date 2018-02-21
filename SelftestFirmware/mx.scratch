@@ -9,6 +9,7 @@
 
 <filestoremove>
 	<file>
+	   		<name>..\Src\usb_otg.c</name>
 	</file>
 </filestoremove>
 
@@ -62,6 +63,8 @@
 	   <include>..\Drivers\STM32F7xx_HAL_Driver\Inc</include>
 	   <include>..\Drivers\STM32F7xx_HAL_Driver\Inc\Legacy</include>
 	   <include>..\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM7\r0p1</include>
+	   <include>..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc</include>
+	   <include>..\Middlewares\ST\STM32_USB_Device_Library\Class\MSC\Inc</include>
 	   <include>..\Drivers\CMSIS\Device\ST\STM32F7xx\Include</include>
 	   <include>..\Middlewares\Third_Party\FatFs\src</include>
 	   <include>..\Middlewares\Third_Party\FreeRTOS\Source\include</include>
