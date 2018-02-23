@@ -10,14 +10,19 @@ GPIO_TypeDef* ad5592rPorts[/*4*/] = {SPI6_CS_0_GPIO_Port, SPI6_CS_1_GPIO_Port, S
 //functions
 void ad5592rSetup(SPI_HandleTypeDef *hspi) {
 	uint8_t i;
-	for(i=0; i<4; ++i)
-		AD5592R_DESELECT(i);
+	ad5592rReg reg;
+	reg.cmd.DnC = AD5592R_SEND_CMD;
+	reg.cmd.addr = AD5592R_REG_NOP;
+	reg.cmd.data = 0;
 	hspiAD5592R = hspi;
+	for(i=0; i<4; ++i){
+		ad5592rWriteCmd(i, reg);
+	}
 }
 
 void ad5592rWriteCmd(uint8_t chip, ad5592rReg cmd) {
 	if (chip>=4) return;
 	AD5592R_SELECT(chip);
-	HAL_SPI_Transmit(hspiAD5592R, (uint8_t) &cmd.reg, 1, 100);
+	HAL_SPI_Transmit(hspiAD5592R, (uint8_t *) &cmd.reg, 1, 100);
 	AD5592R_DESELECT(chip);
 }

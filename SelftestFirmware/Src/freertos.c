@@ -54,6 +54,7 @@
 /* USER CODE BEGIN Includes */     
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "stm32f7xx_hal.h"
 #include "adc.h"
 #include "fatfs.h"
@@ -69,6 +70,7 @@
 #include "fmc.h"
 #include "main.h"
 
+#include "ad5592r.h"
 #include "but.h"
 #include "enc.h"
 #include "leds.h"
@@ -164,6 +166,7 @@ void bootTask(void const * argument)
 	LED_t led[NLEDS];
 	uint32_t i = 0;
 
+	ad5592rSetup(&hspi6);
 	buttonSetup();
 	encSetup(&htim3, 0);
 	ledSetup(&hspi4);
@@ -495,7 +498,34 @@ void testSDCARD() {
 }
 
 void testGPIO() {
-	;
+	ad5592rReg cmd;
+	ad5592rReg dacData;
+	uint16_t val = 0;
+	uint16_t nVal = 32;
+	TickType_t xLastWakeTime;
+
+	cmd.cmd.DnC = AD5592R_SEND_CMD;
+	cmd.cmd.addr = AD5592R_REG_GPO_PINS;
+	cmd.cmd.data = 1<<0;
+	ad5592rWriteCmd(0,cmd);
+	cmd.cmd.addr = AD5592R_REG_DAC_PINS;
+	cmd.cmd.data = 1<<1;
+	ad5592rWriteCmd(0,cmd);
+
+	cmd.cmd.addr = AD5592R_REG_GPO_WRITE;
+	dacData.dacWrite.DnC = AD5592R_SEND_DATA;
+	dacData.dacWrite.addr = 1;
+	xLastWakeTime = xTaskGetTickCount();
+	while (1) {
+		dacData.dacWrite.data = (uint16_t) ((cos(3.1415*2/nVal*val)+1)*2047);
+//		dacData.dacWrite.data = val?0xFFF:0;
+		ad5592rWriteCmd(0,dacData);
+//		cmd.cmd.data = (cmd.cmd.data+1)&1;
+//		ad5592rWriteCmd(0,cmd);
+		if((val=val+1)>=nVal) {
+			val = 0;
+		}
+	}
 }
 
 void termReportFSfail(FRESULT r) {
