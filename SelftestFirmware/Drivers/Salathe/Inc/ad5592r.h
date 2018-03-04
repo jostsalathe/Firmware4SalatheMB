@@ -9,12 +9,23 @@
 //global variables and defines
 extern uint16_t ad5592rPins[];
 extern GPIO_TypeDef* ad5592rPorts[];
+extern uint16_t ad5592rSine[];
 
 #define AD5592R_SELECT(x) HAL_GPIO_WritePin(ad5592rPorts[x], ad5592rPins[x], GPIO_PIN_RESET)
 #define AD5592R_DESELECT(x) HAL_GPIO_WritePin(ad5592rPorts[x], ad5592rPins[x], GPIO_PIN_SET)
 
 #define AD5592R_SEND_CMD 0
 #define AD5592R_SEND_DATA 1
+
+//pin masks
+#define AD5592R_PIN0 (0x1)
+#define AD5592R_PIN1 (0x2)
+#define AD5592R_PIN2 (0x4)
+#define AD5592R_PIN3 (0x8)
+#define AD5592R_PIN4 (0x10)
+#define AD5592R_PIN5 (0x20)
+#define AD5592R_PIN6 (0x40)
+#define AD5592R_PIN7 (0x80)
 
 //control registers addresses
 #define AD5592R_REG_NOP			(0b0000) //No operation

@@ -499,30 +499,22 @@ void testSDCARD() {
 
 void testGPIO() {
 	ad5592rReg cmd;
-	ad5592rReg dacData;
 	uint16_t val = 0;
-	uint16_t nVal = 32;
-	TickType_t xLastWakeTime;
+	uint16_t nVal = 1000;
 
 	cmd.cmd.DnC = AD5592R_SEND_CMD;
-	cmd.cmd.addr = AD5592R_REG_GPO_PINS;
-	cmd.cmd.data = 1<<0;
-	ad5592rWriteCmd(0,cmd);
 	cmd.cmd.addr = AD5592R_REG_DAC_PINS;
-	cmd.cmd.data = 1<<1;
+	cmd.cmd.data = 1;
 	ad5592rWriteCmd(0,cmd);
 
-	cmd.cmd.addr = AD5592R_REG_GPO_WRITE;
-	dacData.dacWrite.DnC = AD5592R_SEND_DATA;
-	dacData.dacWrite.addr = 1;
-	xLastWakeTime = xTaskGetTickCount();
+	cmd.dacWrite.DnC = AD5592R_SEND_DATA;
+	cmd.dacWrite.addr = 0;
+
 	while (1) {
-		dacData.dacWrite.data = (uint16_t) ((cos(3.1415*2/nVal*val)+1)*2047);
-//		dacData.dacWrite.data = val?0xFFF:0;
-		ad5592rWriteCmd(0,dacData);
-//		cmd.cmd.data = (cmd.cmd.data+1)&1;
-//		ad5592rWriteCmd(0,cmd);
-		if((val=val+1)>=nVal) {
+		cmd.dacWrite.data = ad5592rSine[val];
+		ad5592rWriteCmd(0,cmd);
+		val = val+1;
+		if (val >= nVal) {
 			val = 0;
 		}
 	}
