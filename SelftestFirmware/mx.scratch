@@ -9,7 +9,6 @@
 
 <filestoremove>
 	<file>
-	   		<name>..\Src\usb_otg.c</name>
 	</file>
 </filestoremove>
 

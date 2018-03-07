@@ -166,7 +166,7 @@ void bootTask(void const * argument)
 	LED_t led[NLEDS];
 	uint32_t i = 0;
 
-	ad5592rSetup(&hspi6);
+	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
 	buttonSetup();
 	encSetup(&htim3, 0);
 	ledSetup(&hspi4);
@@ -497,26 +497,24 @@ void testSDCARD() {
 	}
 }
 
+#include "ad5592rBenchmark.h"
 void testGPIO() {
-	ad5592rReg cmd;
-	uint16_t val = 0;
-	uint16_t nVal = 1000;
-
-	cmd.cmd.DnC = AD5592R_SEND_CMD;
-	cmd.cmd.addr = AD5592R_REG_DAC_PINS;
-	cmd.cmd.data = 1;
-	ad5592rWriteCmd(0,cmd);
-
-	cmd.dacWrite.DnC = AD5592R_SEND_DATA;
-	cmd.dacWrite.addr = 0;
-
+//	ad5592rBenchmark(&hspi6);
+	ad5592rPin_t pin;
+	ad5592rSetup(&hspi6, 0xF);
+	for (pin.number = 0; pin.number<32; ++pin.number) {
+		ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	}
+	ad5592rWritePinModes();
+	int i = 0;
 	while (1) {
-		cmd.dacWrite.data = ad5592rSine[val];
-		ad5592rWriteCmd(0,cmd);
-		val = val+1;
-		if (val >= nVal) {
-			val = 0;
+		for (pin.number = 0; pin.number<32; ++pin.number) {
+			ad5592rSetPin(pin, ad5592rSine[i]);
 		}
+		if (++i == 1000) {
+			i = 0;
+		}
+		ad5592rUpdate();
 	}
 }
 

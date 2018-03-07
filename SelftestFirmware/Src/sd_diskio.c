@@ -124,31 +124,6 @@ static DSTATUS SD_CheckStatus(BYTE lun)
 }
 
 /**
-  * @brief  Initializes a Drive
-  * @param  lun : not used
-  * @retval DSTATUS: Operation status
-  */
-DSTATUS SD_initialize(BYTE lun)
-{
-	Stat = STA_NOINIT;
-	// check that the kernel has been started before continuing as the osMessage API will fail otherwise
-	if(osKernelRunning())
-	{
-		if(BSP_SD_Init() == MSD_OK)
-		{
-			Stat = SD_CheckStatus(lun);
-		}
-		// if the SD is correctly initialized, create the operation queue
-		if (Stat != STA_NOINIT)
-		{
-			osMessageQDef(SD_Queue, QUEUE_SIZE, uint16_t);
-			SDQueueID = osMessageCreate (osMessageQ(SD_Queue), NULL);
-		}
-	}
-	return Stat;
-}
-
-/**
   * @brief  Gets Disk Status
   * @param  lun : not used
   * @retval DSTATUS: Operation status
@@ -163,7 +138,7 @@ DSTATUS SD_status(BYTE lun)
 
 //---This is a workaround for FatFS R0.12c with FreeRTOS on STM32CubeMX v4.23---
 // on rebuild by CubeMX replace the original function with this version:
-/*
+
 DSTATUS SD_initialize(BYTE lun)
 {
 	Stat = STA_NOINIT;
@@ -183,7 +158,7 @@ DSTATUS SD_initialize(BYTE lun)
 	}
 	return Stat;
 }
-*/
+
 
 /* USER CODE END beforeReadSection */
 /**
