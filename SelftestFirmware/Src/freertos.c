@@ -506,10 +506,11 @@ void testGPIO() {
 		ad5592rSelectPinMode(pin, ad5592rAnalogOut);
 	}
 	ad5592rWritePinModes();
-	int i = 0;
+	int i = 0, val;
 	while (1) {
+		val = ad5592rSine[i];
 		for (pin.number = 0; pin.number<32; ++pin.number) {
-			ad5592rSetPin(pin, ad5592rSine[i]);
+			ad5592rSetPin(pin, val);
 		}
 		if (++i == 1000) {
 			i = 0;
