@@ -7,6 +7,7 @@
 #include "task.h"
 
 //global variables and defines
+extern uint8_t ad5592rChipsActive;
 extern uint32_t ad5592rCsMask[];
 extern uint32_t ad5592rNcsMask[];
 extern __IO uint32_t* ad5592rCsRegs[];
@@ -17,6 +18,7 @@ extern __IO uint32_t* ad5592rSpiSR;
 #define AD5592R_CHIP1_ACTIVE (0x2)
 #define AD5592R_CHIP2_ACTIVE (0x4)
 #define AD5592R_CHIP3_ACTIVE (0x8)
+#define AD5592R_CHIP_ACTIVE(x) ((1<<x) & ad5592rChipsActive)
 
 #define AD5592R_SELECT(x) (*(ad5592rCsRegs[x]) = ad5592rCsMask[x])
 #define AD5592R_DESELECT(x) (*(ad5592rCsRegs[x]) = ad5592rNcsMask[x])
@@ -62,8 +64,8 @@ extern __IO uint32_t* ad5592rSpiSR;
 #define AD5592R_DATA_SOFT_RST (0x5AC)    //Data to write into AD5592R_SOFT_RST for triggering a reset
 
 //control definitions
-#define AD5592R_GPI_RDBK (1 << 10)       //Enable GPI readback in AD5592R_REG_GPI_PINS
-#define AD5592R_DAC_RDBK (1 << 6)        //Enable register readback in AD5592R_REG_RDBK_LDAC command
+#define AD5592R_RDBK_GPI (1 << 10)             //Enable GPI readback in AD5592R_REG_GPI_PINS
+#define AD5592r_RDBK_REG(x) ((1 << 6) | (x << 2)) //Place register address to read from and enable register readback in AD5592R_REG_RDBK_LDAC command
 
 //type definitions
 typedef union {
@@ -100,7 +102,7 @@ typedef enum {
 
 //function prototypes
 //initial setup of all AD5592Rs
-void ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips);
+uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips);
 //select mode of one pin locally
 void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode);
 //send all pin mode changes to AD5592Rs

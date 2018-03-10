@@ -130,7 +130,38 @@ uint16_t ad5592rSine[1000] = {
 		0x799,0x7a5,0x7b2,0x7bf,0x7cc,0x7d9,0x7e6,0x7f3
 };
 
-void ad5592rBenchmark(SPI_HandleTypeDef *hspi) {
+void ad5592rLibBenchmarkDAC(SPI_HandleTypeDef *hspi) {
+#ifdef ALLDACS
+	ad5592rPin_t pin;
+	ad5592rSetup(hspi, 0xF);
+	for (pin.number = 0; pin.number<32; ++pin.number) {
+		ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	}
+	ad5592rWritePinModes();
+	int i = 0, val;
+	while (1) {
+		val = ad5592rSine[i];
+		for (pin.number = 0; pin.number<32; ++pin.number) {
+			ad5592rSetPin(pin, val);
+		}
+#else
+	ad5592rPin_t pin;
+	ad5592rSetup(hspi, 0x1);
+	pin.number = 0;
+	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	ad5592rWritePinModes();
+	int i = 0;
+	while (1) {
+		ad5592rSetPin(pin, ad5592rSine[i]);
+#endif
+		if (++i == 1000) {
+			i = 0;
+		}
+		ad5592rUpdate();
+	}
+}
+
+void ad5592rRegBenchmarkDAC(SPI_HandleTypeDef *hspi) {
 	//SPI6 data register
 	__IO uint16_t *spiDR = (uint16_t *) &(hspi->Instance->DR);
 	//SPI6 status register
@@ -156,8 +187,10 @@ void ad5592rBenchmark(SPI_HandleTypeDef *hspi) {
 	uint16_t dataCmd = 0x8000+ad5592rSine[iSample];
 	//index of DAC
 	uint32_t iDAC = 0;
+#ifdef ALLDACS
 	//index of AD5592R
 	uint32_t iChip = 0;
+#endif
 	//next bit reset register
 	__IO uint32_t *csReg = BSRRs[0];
 	//next value for bit reset register (select)

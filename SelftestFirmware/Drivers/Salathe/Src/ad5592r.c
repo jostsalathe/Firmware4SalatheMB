@@ -20,8 +20,8 @@ uint16_t ad5592rDACpins[4] = {0,0,0,0};
 uint16_t ad5592rPinVals[32];
 
 //functions
-void ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
-	uint8_t i;
+uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
+	int i;
 	ad5592rChipsActive = activeChips & 0xF;
 	hspiAD5592R = hspi;
 	ad5592rSpiDR = (uint16_t *) &(hspi->Instance->DR);
@@ -33,16 +33,35 @@ void ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
 	//flush the SPI RXFIFO
 	AD5592R_SPI_READ(ad5592rPinVals[0]);
 	AD5592R_SPI_READ(ad5592rPinVals[0]);
+	//check if all AD5592Rs respond correctly
+	for (i=0; i<4; ++i) {
+		if (AD5592R_CHIP_ACTIVE(i)) {
+			ad5592rReg_t reg;
+			reg.cmd.DnC = AD5592R_SEND_CMD;
+			reg.cmd.addr = AD5592R_REG_GPI_PINS;
+			reg.cmd.data = 0xFF;
+			ad5592rTxRxReg(i, reg);
+			reg.cmd.addr = AD5592R_REG_RDBK_LDAC;
+			reg.cmd.data = AD5592r_RDBK_REG(AD5592R_REG_GPI_PINS);
+			ad5592rTxRxReg(i, reg);
+			reg = ad5592rTxRxReg(i, (ad5592rReg_t) {0});
+			if (reg.cmd.data != 0xFF) {
+				ad5592rChipsActive &= ~(1<<i); //deactivate chip i
+			}
+		}
+	}
+	//write initial pin configuration
 	for (i=0; i<32; ++i) {
 		ad5592rPinVals[i] = 0;
 	}
 	ad5592rWritePinModes();
+	return ad5592rChipsActive;
 }
 
 void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 	int pinmask = 1<<pin.pin;
 	int chip =  pin.chip;
-	if (!((1<<chip) & ad5592rChipsActive)) return;
+	if (!AD5592R_CHIP_ACTIVE(chip)) return;
 	switch(mode) {
 	case ad5592rDigitalIn: {
 		//activate GPI function
@@ -130,7 +149,7 @@ void ad5592rWritePinModes() {
 	ad5592rReg_t msg;
 	msg.cmd.DnC = AD5592R_SEND_CMD;
 	for (chip=0; chip<4; ++chip){
-		if ((1<<chip) & ad5592rChipsActive) {
+		if (AD5592R_CHIP_ACTIVE(chip)) {
 			if (lastAd5592rGPIpins[chip] != ad5592rGPIpins[chip]) {
 				msg.cmd.addr = AD5592R_REG_GPI_PINS;
 				msg.cmd.data = ad5592rGPIpins[chip];
@@ -185,7 +204,7 @@ void ad5592rUpdate(){
 	cmdMsg.cmd.DnC = AD5592R_SEND_CMD;
 	//treat one chip at a time
 	for (chip=0; chip<4; ++chip) {
-		if ((1<<chip) & ad5592rChipsActive) {
+		if (AD5592R_CHIP_ACTIVE(chip)) {
 			uint16_t pinVals[8];
 			//save the set values locally
 			for (pin=0; pin<8; ++pin) {
@@ -194,7 +213,7 @@ void ad5592rUpdate(){
 			//handle digital pins
 			if (ad5592rGPIpins[chip]) {
 				cmdMsg.cmd.addr = AD5592R_REG_GPI_PINS;
-				cmdMsg.cmd.data = AD5592R_GPI_RDBK | ad5592rGPIpins[chip];
+				cmdMsg.cmd.data = AD5592R_RDBK_GPI | ad5592rGPIpins[chip];
 				//send GPI readback command
 				AD5592R_SELECT(0);
 				AD5592R_SPI_WRITE(cmdMsg.reg);
@@ -277,7 +296,7 @@ void ad5592rUpdate(){
 }
 
 ad5592rReg_t ad5592rTxRxReg(uint8_t chip, ad5592rReg_t reg) {
-	if (!((1<<chip) & ad5592rChipsActive)) {
+	if (!AD5592R_CHIP_ACTIVE(chip)) {
 		reg.reg = 0;
 		return reg;
 	}

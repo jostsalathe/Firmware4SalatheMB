@@ -14,8 +14,8 @@
 #define BUTTON5 5
 #define BUTTON6 6
 #define BUTTON7 7
-#define ROTARYBUTTON0 8
-#define ROTARYBUTTON1 9
+#define BUTTONENC0 8
+#define BUTTONENC1 9
 
 //type definitions
 

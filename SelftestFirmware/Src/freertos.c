@@ -201,7 +201,7 @@ void bootTask(void const * argument)
 	termPutString("\r--- peripherals check done ---\r");
 
 	oledPutString("press button to continue...", OLED_GREEN);
-	while (!buttonFalling(ROTARYBUTTON0));
+	while (!buttonFalling(BUTTONENC0));
 
 	oledClear();
 	booting = 0;
@@ -240,7 +240,7 @@ void guiTask(void const * argument)
 	for (;;) {
 		vTaskDelayUntil(&xLastWakeTime, 100); //100ms cycle time
 
-		if (buttonFalling(ROTARYBUTTON0)) {
+		if (buttonFalling(BUTTONENC0)) {
 			if (encValue(0) == 85) encSet(0, 170);
 			else encSet(0, 85);
 		}
@@ -499,23 +499,55 @@ void testSDCARD() {
 
 #include "ad5592rBenchmark.h"
 void testGPIO() {
-//	ad5592rBenchmark(&hspi6);
+//	ad5592rLibBenchmarkDAC(&hspi6);
+//	ad5592rRegBenchmarkDAC(&hspi6);
+	TickType_t xLastWakeTime;
+
+
 	ad5592rPin_t pin;
-	ad5592rSetup(&hspi6, 0xF);
-	for (pin.number = 0; pin.number<32; ++pin.number) {
-		ad5592rSelectPinMode(pin, ad5592rAnalogOut);
-	}
+	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE);
+	pin.number = 0; //sine output
+	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	pin.number = 1; //analog test input
+	ad5592rSelectPinMode(pin, ad5592rAnalogIn);
+	pin.number = 2; //mirror of pin 1
+	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	pin.number = 3; //square wave
+	ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+	pin.number = 4; //square wave
+	ad5592rSelectPinMode(pin, ad5592rDigitalOutOpenDrain);
+	pin.number = 5; //digital test input
+	ad5592rSelectPinMode(pin, ad5592rDigitalIn);
+	pin.number = 6; //mirror of pin 5 (push/pull)
+	ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+	pin.number = 7; //mirror of pin 5 (open drain)
+	ad5592rSelectPinMode(pin, ad5592rDigitalOutOpenDrain);
 	ad5592rWritePinModes();
-	int i = 0, val;
+	int i = 0;
+	xLastWakeTime = xTaskGetTickCount();
 	while (1) {
-		val = ad5592rSine[i];
-		for (pin.number = 0; pin.number<32; ++pin.number) {
-			ad5592rSetPin(pin, val);
-		}
+		uint16_t input;
+		pin.number = 0; //sine output
+		ad5592rSetPin(pin, ad5592rSine[i]);
+		pin.number = 1; //analog test input
+		input = ad5592rGetPin(pin);
+		pin.number = 2; //mirror of pin 1
+		ad5592rSetPin(pin, input);
+		pin.number = 3; //square wave
+		ad5592rSetPin(pin, i<500);
+		pin.number = 4; //square wave
+		ad5592rSetPin(pin, i>=500);
+		pin.number = 5; //digital test input
+		input = ad5592rGetPin(pin);
+		pin.number = 6; //mirror of pin 5 (push/pull)
+		ad5592rSetPin(pin, input);
+		pin.number = 7; //mirror of pin 5 (open drain)
+		ad5592rSetPin(pin, input);
 		if (++i == 1000) {
 			i = 0;
 		}
 		ad5592rUpdate();
+		vTaskDelayUntil(&xLastWakeTime, 1);
 	}
 }
 
