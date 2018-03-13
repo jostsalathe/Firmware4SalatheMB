@@ -71,6 +71,7 @@
 #include "main.h"
 
 #include "ad5592r.h"
+#include "ad5592rBenchmark.h"
 #include "but.h"
 #include "enc.h"
 #include "leds.h"
@@ -86,8 +87,8 @@ osThreadId GUIHandle;
 
 /* USER CODE BEGIN Variables */
 #define RAM_CHECK_FULL
-#define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
-#define TEST_END 0x40000 //end the test right before this address offset
+#define TEST_SIZE 0x80//0 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
+#define TEST_END 0x4000//0 //end the test right before this address offset
 #define TEST_TYPE uint32_t
 
 uint8_t booting;
@@ -194,17 +195,17 @@ void bootTask(void const * argument)
 	termPutString("\r--- testing peripherals ---\r");
 
 	testSDCARD();
-//	testSDRAM();
-	testGPIO();
+	testSDRAM();
 
 	ledSet(led);
 	termPutString("\r--- peripherals check done ---\r");
 
 	oledPutString("press button to continue...", OLED_GREEN);
-	while (!buttonFalling(BUTTONENC0));
+	while (!(buttonFalling(BUTTONENC0)||buttonFalling(BUTTONENC1)));
 
 	oledClear();
 	booting = 0;
+	testGPIO();
 	vTaskDelete(NULL);
 	while(1);
   /* USER CODE END bootTask */
@@ -234,7 +235,7 @@ void guiTask(void const * argument)
 
 	oledClear();
 	oledCurSet(0, 10);
-	oledPutString("Grumpy wizards\nmake toxic brew\nfor the evil\nQueen and Jack.", OLED_BLUE);
+	oledPutString("Ich habe dich\nganz doll\nlieb\nmein Hasi!", OLED_BLUE);
 
 	/* Infinite loop */
 	for (;;) {
@@ -243,6 +244,9 @@ void guiTask(void const * argument)
 		if (buttonFalling(BUTTONENC0)) {
 			if (encValue(0) == 85) encSet(0, 170);
 			else encSet(0, 85);
+		}
+		if (buttonFalling(BUTTONENC1)) {
+			encSet(0, 0);
 		}
 		uint16_t pos = encValue(0);
 		for (i = 0; i < 8; ++i) {
@@ -497,7 +501,6 @@ void testSDCARD() {
 	}
 }
 
-#include "ad5592rBenchmark.h"
 void testGPIO() {
 //	ad5592rLibBenchmarkDAC(&hspi6);
 //	ad5592rRegBenchmarkDAC(&hspi6);
