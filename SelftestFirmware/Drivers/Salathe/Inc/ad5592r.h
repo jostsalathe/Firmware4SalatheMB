@@ -7,6 +7,9 @@
 #include "task.h"
 
 //global variables and defines
+#define AD5592R_N_SINE 1000
+extern uint16_t ad5592rSine[];
+
 extern uint8_t ad5592rChipsActive;
 extern uint32_t ad5592rCsMask[];
 extern uint32_t ad5592rNcsMask[];

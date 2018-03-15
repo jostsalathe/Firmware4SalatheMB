@@ -2,6 +2,7 @@
 #define _oled_H
 
 #include "stm32f7xx_hal.h"
+#include "font.h"
 
 //global variables and defines
 #define OLED_WIDTH 96

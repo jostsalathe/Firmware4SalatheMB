@@ -3,6 +3,7 @@
 
 #include "stm32f7xx_hal.h"
 #include "usart.h"
+#include "font.h"
 #include <string.h>
 
 //global variables and defines
