@@ -1,3 +1,10 @@
+/*
+ * sdCard.h
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe
+ */
+
 #ifndef _SD_CARD_H
 #define _SD_CARD_H
 

@@ -1,5 +1,12 @@
-#ifndef _oled_H
-#define _oled_H
+/*
+ * oled.h
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe
+ */
+
+#ifndef _OLED_H
+#define _OLED_H
 
 #include "stm32f7xx_hal.h"
 #include "font.h"
@@ -33,4 +40,4 @@ void oledWriteFontset(uint16_t color);
 void oledWriteCmd(uint8_t c);
 void oledWriteData(uint8_t d);
 
-#endif
+#endif /*_OLED_H*/

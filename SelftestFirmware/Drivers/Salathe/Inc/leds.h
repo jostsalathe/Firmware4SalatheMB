@@ -1,5 +1,12 @@
-#ifndef _leds_H
-#define _leds_H
+/*
+ * leds.h
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe
+ */
+
+#ifndef _LEDS_H
+#define _LEDS_H
 
 #include "stm32f7xx_hal.h"
 #include "FreeRTOS.h"
@@ -30,4 +37,4 @@ void ledSet(LED_t *led);
 void ledProgress(float progress, LED_t on, LED_t off);
 
 
-#endif
+#endif /*_LEDS_H*/

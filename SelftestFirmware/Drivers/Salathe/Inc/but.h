@@ -1,5 +1,12 @@
-#ifndef _but_H
-#define _but_H
+/*
+ * but.h
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe
+ */
+
+#ifndef _BUT_H
+#define _BUT_H
 
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_gpio.h"
@@ -25,4 +32,5 @@ void buttonSetup();
 uint8_t buttonRising(uint8_t buttonNumber);
 uint8_t buttonFalling(uint8_t buttonNumber);
 uint8_t buttonRead(uint8_t buttonNumber);
-#endif
+
+#endif /*_BUT_H*/

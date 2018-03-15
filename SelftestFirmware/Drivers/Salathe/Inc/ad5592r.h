@@ -1,5 +1,12 @@
-#ifndef _ad5592r_H
-#define _ad5592r_H
+/*
+ * ad5592r.h
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe
+ */
+
+#ifndef _AD5592R_H
+#define _AD5592R_H
 
 #include "main.h"
 #include "stm32f7xx_hal.h"
@@ -119,4 +126,4 @@ void ad5592rUpdate();
 //directly send a command to one AD5592R and receive the response
 ad5592rReg_t ad5592rTxRxReg(uint8_t chip, ad5592rReg_t reg);
 
-#endif
+#endif /*_AD5592R_H*/

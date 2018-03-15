@@ -1,12 +1,12 @@
 /*
- * application.h
+ * testRoutines.h
  *
  *  Created on: 15.03.2018
  *      Author: Jost Salathe
  */
 
-#ifndef _test_routines_H
-#define _test_routines_H
+#ifndef _TESTROUTINES_H
+#define _TESTROUTINES_H
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -33,4 +33,4 @@ void testSDCARD();
 void testAD5592R(SPI_HandleTypeDef *hspi);
 void demoAD5592R(SPI_HandleTypeDef *hspi);
 
-#endif /*_test_routines_H*/
+#endif /*_TESTROUTINES_H*/
