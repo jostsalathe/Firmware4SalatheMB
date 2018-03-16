@@ -65,13 +65,8 @@
 #include "fmc.h"
 
 /* USER CODE BEGIN Includes */
-#include "but.h"
-#include "enc.h"
-#include "leds.h"
 #include "oled.h"
 #include "term.h"
-#include "font.h"
-
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -133,7 +128,6 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
 

@@ -1,5 +1,5 @@
 /*
- * enc.h
+ * application.h
  *
  *  Created on: 15.03.2018
  *      Author: Jost Salathe <jostsalathe@gmail.com>
@@ -14,20 +14,35 @@
  *  General Public License for more details.
  */
 
-#ifndef _ENC_H
-#define _ENC_H
+#ifndef _APPLICATION_H
+#define _APPLICATION_H
 
-#include "stm32f7xx_hal.h"
+//includes
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "benchmarks.h"
+#include "testRoutines.h"
+#include "ad5592r.h"
+#include "but.h"
+#include "enc.h"
+#include "leds.h"
+#include "oled.h"
+#include "sdCard.h"
+#include "term.h"
 
 //global variables and defines
-#define ENC_NENCS 2
-#define ENC_EPD 4 //edges (counter in-/decrements) per dent of the encoders
-#define ENC_MAX 65535/ENC_EPD
+
 //type definitions
 
 //function prototypes
-void encSetup(TIM_HandleTypeDef *htim, uint8_t encNum);
-void encSet(uint8_t encNum, uint16_t value);
-uint16_t encValue(uint8_t encNum);
+void appInit(SPI_HandleTypeDef *hspi_ad5592r,
+		TIM_HandleTypeDef *htim_enc0,
+		TIM_HandleTypeDef *htim_enc1,
+		SPI_HandleTypeDef *hspi_led,
+		SPI_HandleTypeDef *hspi_oled_ad1938,
+		UART_HandleTypeDef *huart_term,
+		SDRAM_HandleTypeDef *hsdram);
+void appGui();
 
-#endif /*_ENC_H*/
+#endif /* _APPLICATION_H */

@@ -1,7 +1,22 @@
+/*
+ * ad5592r.c
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe <jostsalathe@gmail.com>
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  version 2 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ */
+
 #include "ad5592r.h"
 
 //variable definitions
-
 SPI_HandleTypeDef *hspiAD5592R;
 uint8_t ad5592rChipsActive = 0;
 uint32_t ad5592rCsMask[/*4*/] = {SPI6_CS_0_Pin<<16, SPI6_CS_1_Pin<<16, SPI6_CS_2_Pin<<16, SPI6_CS_3_Pin<<16};

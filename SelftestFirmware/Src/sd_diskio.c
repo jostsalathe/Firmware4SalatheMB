@@ -124,6 +124,12 @@ static DSTATUS SD_CheckStatus(BYTE lun)
 }
 
 /**
+  * @brief  Initializes a Drive
+  * @param  lun : not used
+  * @retval DSTATUS: Operation status
+  */
+
+/**
   * @brief  Gets Disk Status
   * @param  lun : not used
   * @retval DSTATUS: Operation status

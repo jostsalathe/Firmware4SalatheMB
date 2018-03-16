@@ -1,9 +1,30 @@
+/*
+ * oled.c
+ *
+ *  Created on: 15.03.2018
+ *      Author: Jost Salathe <jostsalathe@gmail.com>
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  version 2 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ */
+
 #include "oled.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include <stdlib.h>
 
 //defines
+#define OLED_DC_PIN   SPI1_DC_OLED_Pin
+#define OLED_DC_PORT  SPI1_DC_OLED_GPIO_Port
+#define OLED_CS_PIN   SPI1_CS_OLED_Pin
+#define OLED_CS_PORT  SPI1_CS_OLED_GPIO_Port
+
 #define SSD1331_CMD_DRAWLINE 		0x21
 #define SSD1331_CMD_DRAWRECT 		0x22
 #define SSD1331_CMD_COPY	 		0x23
@@ -34,8 +55,8 @@
 #define SSD1331_CMD_PRECHARGEC 		0x8C
 #define SSD1331_CMD_PRECHARGELEVEL 	0xBB
 #define SSD1331_CMD_VCOMH 			0xBE
-#define SSD1331_WRITE_DC(x) {HAL_GPIO_WritePin(oledDC_GPIOx, oledDC_GPIO_Pin, x?GPIO_PIN_SET:GPIO_PIN_RESET);}
-#define SSD1331_WRITE_CS(x) {HAL_GPIO_WritePin(oledCS_GPIOx, oledCS_GPIO_Pin, x?GPIO_PIN_SET:GPIO_PIN_RESET);}
+#define SSD1331_WRITE_DC(x) {HAL_GPIO_WritePin(OLED_DC_PORT, OLED_DC_PIN, x?GPIO_PIN_SET:GPIO_PIN_RESET);}
+#define SSD1331_WRITE_CS(x) {HAL_GPIO_WritePin(OLED_CS_PORT, OLED_CS_PIN, x?GPIO_PIN_SET:GPIO_PIN_RESET);}
 
 #define OLED_CHAR_WIDTH 5
 #define OLED_CHAR_HEIGHT 8
@@ -45,10 +66,6 @@
 //variables
 SPI_HandleTypeDef *hspiOled;
 uint8_t oledCurX, oledCurY;
-GPIO_TypeDef* oledDC_GPIOx;
-uint16_t oledDC_GPIO_Pin;
-GPIO_TypeDef* oledCS_GPIOx;
-uint16_t oledCS_GPIO_Pin;
 
 //functions
 uint16_t oledColor565(uint8_t r, uint8_t g, uint8_t b){
@@ -168,7 +185,7 @@ void oledPutChar(char c, uint16_t color){
 	}
 }
 
-void oledPutString(char *s, uint16_t color){
+void oledPutString(char *s, uint16_t color) {
 	uint32_t i = 0;
 	while(s[i]!='\0'){
 		oledPutChar(s[i], color);
@@ -176,11 +193,7 @@ void oledPutString(char *s, uint16_t color){
 	}
 }
 
-void oledSetup(SPI_HandleTypeDef* hspi, GPIO_TypeDef* dcGPIOx, uint16_t dcGPIOpin, GPIO_TypeDef* csGPIOx, uint16_t csGPIOpin){
-	oledDC_GPIOx = dcGPIOx;
-	oledDC_GPIO_Pin = dcGPIOpin;
-	oledCS_GPIOx = csGPIOx;
-	oledCS_GPIO_Pin = csGPIOpin;
+void oledSetup(SPI_HandleTypeDef* hspi) {
 	hspiOled = hspi;
 	oledCurX = 0;
 	oledCurY = 0;
@@ -246,10 +259,11 @@ void oledFillRectangel(uint8_t xMin, uint8_t yMin, uint8_t xMax, uint8_t yMax, u
 }
 
 void oledProgress(float progress, uint16_t color) {
-	uint8_t progr = progress*(OLED_WIDTH-1);
-	oledFillRectangel(progr, OLED_HEIGHT-1, OLED_WIDTH-1, OLED_HEIGHT-1, 0);
-	if(progr)
-		oledFillRectangel(0, OLED_HEIGHT-1, progr, OLED_HEIGHT-1, color);
+	uint8_t progr = progress*(OLED_WIDTH)+0.5;
+	if (progr<OLED_WIDTH)
+		oledFillRectangel(progr, OLED_HEIGHT-1, OLED_WIDTH-1, OLED_HEIGHT-1, 0);
+	if (progr)
+		oledFillRectangel(0, OLED_HEIGHT-1, progr-1, OLED_HEIGHT-1, color);
 }
 
 void oledFillScreen(uint16_t color) {
