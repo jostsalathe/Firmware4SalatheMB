@@ -69,17 +69,7 @@
 #include "gpio.h"
 #include "fmc.h"
 #include "main.h"
-/*
-#include "benchmarks.h"
-#include "testRoutines.h"
-#include "ad5592r.h"
-#include "but.h"
-#include "enc.h"
-#include "leds.h"
-#include "oled.h"
-#include "sdCard.h"
-#include "term.h"
-*/
+
 #include "application.h"
 
 /* USER CODE END Includes */
