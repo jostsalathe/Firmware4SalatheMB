@@ -9,7 +9,6 @@
 
 <filestoremove>
     <file>
-    <name>..\Src\system_stm32f7xx.c</name>
     </file>
 </filestoremove>
 
@@ -32,7 +31,7 @@
 			
     <usedDebug>true</usedDebug>
     	<debugprobe>swd</debugprobe>
-    <optimization>2</optimization>
+    <optimization>6</optimization>
     <icfloc>1</icfloc>
     <Adefines>
         <define></define>
