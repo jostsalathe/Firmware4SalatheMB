@@ -18,23 +18,17 @@
 
 uint8_t booting = 1;
 
-void appInit(SPI_HandleTypeDef *hspi_ad5592r,
-		TIM_HandleTypeDef *htim_enc0,
-		TIM_HandleTypeDef *htim_enc1,
-		SPI_HandleTypeDef *hspi_led,
-		SPI_HandleTypeDef *hspi_oled_ad1938,
-		UART_HandleTypeDef *huart_term,
-		SDRAM_HandleTypeDef *hsdram) {
+void appInit() {
 	LED_t leds[NLEDS];
 	uint32_t i = 0;
 
-	ad5592rSetup(hspi_ad5592r, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
+	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
 	buttonSetup();
-	encSetup(htim_enc0, 0);
-	encSetup(htim_enc1, 1);
-	ledSetup(hspi_led);
-	oledSetup(hspi_oled_ad1938);
-	termSetup(huart_term);
+	encSetup(&htim3, 0);
+	encSetup(&htim4, 1);
+	ledSetup(&hspi4);
+	oledSetup(&hspi1);
+	termSetup(&huart1);
 
 	oledFillScreen(OLED_WHITE);
 	for (i = 0; i < NLEDS; ++i) {
@@ -57,7 +51,7 @@ void appInit(SPI_HandleTypeDef *hspi_ad5592r,
 	termPutString("\r--- testing peripherals ---\r");
 
 	testSDCARD();
-	testSDRAM(hsdram);
+	testSDRAM(&hsdram1);
 
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
@@ -67,7 +61,7 @@ void appInit(SPI_HandleTypeDef *hspi_ad5592r,
 
 	oledClear();
 	booting = 0;
-	demoAD5592R(hspi_ad5592r);
+	demoAD5592R(&hspi6);
 }
 
 void appGui() {

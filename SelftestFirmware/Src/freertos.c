@@ -52,24 +52,6 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "stm32f7xx_hal.h"
-#include "adc.h"
-#include "fatfs.h"
-#include "rng.h"
-#include "rtc.h"
-#include "sai.h"
-#include "sdmmc.h"
-#include "spi.h"
-#include "tim.h"
-#include "usart.h"
-#include "usb_otg.h"
-#include "gpio.h"
-#include "fmc.h"
-#include "main.h"
-
 #include "application.h"
 
 /* USER CODE END Includes */
@@ -143,7 +125,7 @@ void bootTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN bootTask */
-  appInit(&hspi6, &htim3, &htim4, &hspi4, &hspi1, &huart1, &hsdram1);
+  appInit();
   /* USER CODE END bootTask */
 }
 

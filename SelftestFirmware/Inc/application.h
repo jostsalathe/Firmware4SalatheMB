@@ -21,6 +21,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "fmc.h"
+#include "spi.h"
+#include "tim.h"
+
 #include "benchmarks.h"
 #include "testRoutines.h"
 #include "ad5592r.h"
@@ -36,13 +40,7 @@
 //type definitions
 
 //function prototypes
-void appInit(SPI_HandleTypeDef *hspi_ad5592r,
-		TIM_HandleTypeDef *htim_enc0,
-		TIM_HandleTypeDef *htim_enc1,
-		SPI_HandleTypeDef *hspi_led,
-		SPI_HandleTypeDef *hspi_oled_ad1938,
-		UART_HandleTypeDef *huart_term,
-		SDRAM_HandleTypeDef *hsdram);
+void appInit();
 void appGui();
 
 #endif /* _APPLICATION_H */
