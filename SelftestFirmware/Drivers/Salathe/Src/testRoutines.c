@@ -16,36 +16,45 @@
 
 #include "testRoutines.h"
 
-//variable definitions
+//defines
+#define TEST_TYPE uint32_t
+
+#define RAM_TEST_RAND 0
+#define RAM_TEST_ALTER 1
+#define RAM_TESTPATTERN RAM_TEST_ALTER
+
+//#define RAM_TEST_FULL
+#define RAM_TEST_CHUNK_SIZE 0x2000 //variables of TEST_TYPE (0x2000 byte for one row)
+#define RAM_TEST_END 0x40000//SDRAM_SIZE //end the test right before this address offset
 
 //functions
 void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	uint32_t err = 0, tested = 0, i = 0;
 	LED_t off = {0x0,0x0,0x0};
 	LED_t on = {0x0,0x3F,0x0};
-#ifdef RAM_CHECK_FULL
+#ifdef RAM_TEST_FULL
 	TEST_TYPE *addr;
 #else
 	TEST_TYPE **addrs;
 #endif
 	TEST_TYPE *dataW;
 	TEST_TYPE *dataR;
-	FIL *log;
+	FIL *logFile;
 	char hexBuf[9] = {'\0'};
 
-	dataW = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
-	dataR = malloc(sizeof(TEST_TYPE) * TEST_SIZE);
-#ifndef RAM_CHECK_FULL
-	addrs = malloc(sizeof(TEST_TYPE *) * TEST_SIZE);
+	dataW = malloc(sizeof(TEST_TYPE) * RAM_TEST_CHUNK_SIZE);
+	dataR = malloc(sizeof(TEST_TYPE) * RAM_TEST_CHUNK_SIZE);
+#ifndef RAM_TEST_FULL
+	addrs = malloc(sizeof(TEST_TYPE *) * RAM_TEST_CHUNK_SIZE);
 #endif
-	log = malloc(sizeof(FIL));
+	logFile = malloc(sizeof(FIL));
 	oledPutString("SDRAM: ", OLED_GREEN);
 	termPutString("\r-- testing SDRAM --\r");
 	if (!dataW || !dataR
-#ifndef RAM_CHECK_FULL
+#ifndef RAM_TEST_FULL
 			|| !addrs
 #endif
-			|| !log) {
+			|| !logFile) {
 		oledPutString("malloc\n failed", OLED_RED);
 		termPutString("ERROR: malloc failed!\rEntering Error handler...");
 		_Error_Handler(__FILE__, __LINE__);
@@ -54,76 +63,86 @@ void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	if (SD_Rdy) {
 		FRESULT fRet;
 		TCHAR fName[12] = {'R','A','M','t','e','s','t','.','l','o','g',0};
-		fRet = f_open(log, fName, FA_CREATE_ALWAYS | FA_WRITE);
+		fRet = f_open(logFile, fName, FA_CREATE_ALWAYS | FA_WRITE);
 		if (fRet != FR_OK) {
-			f_close(log);
-			free(log);
-			log = 0;
+			f_close(logFile);
+			free(logFile);
+			logFile = 0;
 		}
 	} else {
-		free(log);
-		log = 0;
+		free(logFile);
+		logFile = 0;
 	}
 
 	ledProgress(0.0, on, off);
 	oledProgress(0.0, OLED_GREEN);
-#ifdef RAM_CHECK_FULL
-	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+TEST_SIZE <= (TEST_TYPE *) (TEST_END+SDRAM_ADDR); addr += TEST_SIZE) {
-		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_END), on, off);
-		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_END), OLED_GREEN);
+#ifdef RAM_TEST_FULL
+	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+RAM_TEST_CHUNK_SIZE <= (TEST_TYPE *) (RAM_TEST_END+SDRAM_ADDR); addr += RAM_TEST_CHUNK_SIZE) {
+		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(RAM_TEST_END), on, off);
+		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(RAM_TEST_END), OLED_GREEN);
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
 		termPutString("\r");
 #endif
-		for (i = 0; i < TEST_SIZE; ++i) {
-#ifndef RAM_CHECK_FULL
+		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
 			uint64_t randNum = 0;
+#ifndef RAM_TEST_FULL
 			HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t *) &randNum);
-			randNum *= SDRAM_END-SDRAM_ADDR;
+			randNum *= SDRAM_SIZE-1;
 			randNum /= 4294967295;
 			randNum /= 4;
 			randNum *= 4;
 			randNum += SDRAM_ADDR;
 			addrs[i] = (TEST_TYPE *) (uint32_t) randNum;
 #endif
-			dataW[i] = i%2?0x55555555:0xAAAAAAAA;//(TEST_TYPE) randNum;
+#if RAM_TESTPATTERN == RAM_TEST_RAND
+			HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t *) &randNum);
+			dataW[i] = (TEST_TYPE) randNum;
+#elif RAM_TESTPATTERN == RAM_TEST_ALTER
+			dataW[i] = i%2?0x55555555:0xAAAAAAAA;
+#else
+			dataW[i] = i;
+#endif
 		}
-#ifdef RAM_CHECK_FULL
-		while (HAL_SDRAM_Write_32b(hsdram, addr, dataW, TEST_SIZE));
-		while (HAL_SDRAM_Read_32b(hsdram, addr, dataR, TEST_SIZE));
+#ifdef RAM_TEST_FULL
+		while (HAL_SDRAM_Write_32b(hsdram, addr, dataW, RAM_TEST_CHUNK_SIZE));
+		while (HAL_SDRAM_Read_32b(hsdram, addr, dataR, RAM_TEST_CHUNK_SIZE));
 #else
 		ledProgress(0.125, on, off);
 		oledProgress(0.125, OLED_GREEN);
-		for (i = 0; i < TEST_SIZE; ++i) {
+		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
 			HAL_SDRAM_Write_32b(hsdram, addrs[i], dataW+i, 1);
 		}
-		for (i = 0; i < TEST_SIZE; ++i) {
+		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
 			HAL_SDRAM_Read_32b(hsdram, addrs[i], dataR+i, 1);
 		}
 		ledProgress(0.25, on, off);
 		oledProgress(0.25, OLED_GREEN);
 #endif
-		for (i = 0; i < TEST_SIZE; ++i) {
-			logStr(log, "0x");
-#ifdef RAM_CHECK_FULL
-			logStr(log, hex2Str((uint32_t) (addr + i), 8, hexBuf));
+		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
+			logStr(logFile, "0x");
+#ifdef RAM_TEST_FULL
+			logStr(logFile, hex2Str((uint32_t) (addr + i), 8, hexBuf));
 #else
-			if ((i&0x1F)==0)
-				ledProgress((float) i/TEST_SIZE*0.75+0.25, on, off);
-			logStr(log, hex2Str((uint32_t) addrs[i], 8, hexBuf));
+			if ((i&0x1F)==0) {
+				float progress = 0.75*i/RAM_TEST_CHUNK_SIZE+0.25;
+				ledProgress(progress, on, off);
+				oledProgress(progress, OLED_GREEN);
+			}
+			logStr(logFile, hex2Str((uint32_t) addrs[i], 8, hexBuf));
 #endif
-			logStr(log, ": 0x");
-			logStr(log, hex2Str(dataW[i], sizeof(TEST_TYPE)*2, hexBuf));
-			logStr(log, "->0x");
-			logStr(log, hex2Str(dataR[i], sizeof(TEST_TYPE)*2, hexBuf));
+			logStr(logFile, ": 0x");
+			logStr(logFile, hex2Str(dataW[i], sizeof(TEST_TYPE)*2, hexBuf));
+			logStr(logFile, "->0x");
+			logStr(logFile, hex2Str(dataR[i], sizeof(TEST_TYPE)*2, hexBuf));
 			if (dataW[i] != dataR[i]) {
 				++err;
-				logStr(log, " ERROR");
+				logStr(logFile, " ERROR");
 			}
-			logStr(log, "\r");
+			logStr(logFile, "\r");
 		}
-		tested += TEST_SIZE;
-#ifdef RAM_CHECK_FULL
+		tested += RAM_TEST_CHUNK_SIZE;
+#ifdef RAM_TEST_FULL
 	}
 #endif
 	ledProgress(1.0, on, off);
@@ -145,11 +164,14 @@ void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 		oledPutString("okay\n", OLED_GREEN);
 	}
 
+#ifndef RAM_TEST_FULL
+	free(addrs);
+#endif
 	free(dataW);
 	free(dataR);
-	if (log) {
-		f_close(log);
-		free(log);
+	if (logFile) {
+		f_close(logFile);
+		free(logFile);
 	}
 }
 

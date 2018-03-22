@@ -59,8 +59,6 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
-#define SDRAM_ADDR 0x60000000
-#define SDRAM_END 0x607FFFFF
 
 #define PUSH0_Pin GPIO_PIN_8
 #define PUSH0_GPIO_Port GPIOI

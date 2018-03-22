@@ -26,13 +26,10 @@
 #include "leds.h"
 #include "term.h"
 #include "sdCard.h"
+#include "sdram.h"
 #include "ad5592r.h"
 
 //global variables and defines
-#define RAM_CHECK_FULL
-#define TEST_SIZE 0x800 //variables of TEST_TYPE (0x2000 byte for one row, 0x8000 for maximum heap usage)
-#define TEST_END (SDRAM_END-SDRAM_ADDR+1) //end the test right before this address offset
-#define TEST_TYPE uint32_t
 
 //type definitions
 

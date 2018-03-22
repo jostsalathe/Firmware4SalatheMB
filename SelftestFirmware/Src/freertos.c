@@ -99,7 +99,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of boot */
-  osThreadDef(boot, bootTask, osPriorityLow, 0, 4096);
+  osThreadDef(boot, bootTask, osPriorityRealtime, 0, 4096);
   bootHandle = osThreadCreate(osThread(boot), NULL);
 
   /* definition and creation of GUI */

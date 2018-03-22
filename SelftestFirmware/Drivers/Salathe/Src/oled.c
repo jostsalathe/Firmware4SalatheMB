@@ -149,13 +149,13 @@ void oledPutChar(char c, uint16_t color){
 			oledWriteCmd(0);							// Column target
 			oledWriteCmd(0);							// Row target
 			oledCurY -= shiftAmount;
-			vTaskDelay(1);
+			vTaskDelay(10);
 			oledWriteCmd(SSD1331_CMD_CLEAR_WINDOW);		// 0x25
 			oledWriteCmd(0);							// Column 1
 			oledWriteCmd(oledCurY-OLED_VSPACE);			// Row 1
 			oledWriteCmd(OLED_WIDTH-1);					// Column 2
 			oledWriteCmd(OLED_HEIGHT-1);				// Row 2
-			vTaskDelay(1);
+			vTaskDelay(10);
 		}
 	}
 

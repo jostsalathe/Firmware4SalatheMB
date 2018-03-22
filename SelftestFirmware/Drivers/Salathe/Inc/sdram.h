@@ -1,5 +1,5 @@
 /*
- * application.h
+ * sdram.h
  *
  *  Created on: 15.03.2018
  *      Author: Jost Salathe <jostsalathe@gmail.com>
@@ -14,34 +14,19 @@
  *  General Public License for more details.
  */
 
-#ifndef _APPLICATION_H
-#define _APPLICATION_H
+#ifndef _SDRAM_H
+#define _SDRAM_H
 
-//includes
-#include "FreeRTOS.h"
-#include "task.h"
-
-#include "fmc.h"
-#include "spi.h"
-#include "tim.h"
-
-#include "benchmarks.h"
-#include "testRoutines.h"
-#include "ad5592r.h"
-#include "but.h"
-#include "enc.h"
-#include "leds.h"
-#include "oled.h"
-#include "sdCard.h"
-#include "sdram.h"
-#include "term.h"
+#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_sdram.h"
 
 //global variables and defines
+#define SDRAM_ADDR        ((uint32_t)0xC0000000)
+#define SDRAM_SIZE        ((uint32_t)0x00800000)
 
 //type definitions
 
 //function prototypes
-void appInit();
-void appGui();
+void sdramSetup(SDRAM_HandleTypeDef* hsdram);
 
-#endif /* _APPLICATION_H */
+#endif /*_SDRAM_H*/

@@ -29,6 +29,7 @@ void appInit() {
 	ledSetup(&hspi4);
 	oledSetup(&hspi1);
 	termSetup(&huart1);
+	sdramSetup(&hsdram1);
 
 	oledFillScreen(OLED_WHITE);
 	for (i = 0; i < NLEDS; ++i) {
@@ -51,7 +52,12 @@ void appInit() {
 	termPutString("\r--- testing peripherals ---\r");
 
 	testSDCARD();
-	testSDRAM(&hsdram1);
+	for (i = 0; i<128; ++i) {
+		char str[10] = {0};
+		termPutString("\rRAM check no ");
+		termPutString(hex2Str(i, 3, str));
+		testSDRAM(&hsdram1);
+	}
 
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
