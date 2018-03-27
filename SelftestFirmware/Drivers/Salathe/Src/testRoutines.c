@@ -28,7 +28,7 @@
 #define RAM_TEST_END 0x40000//SDRAM_SIZE //end the test right before this address offset
 
 //functions
-void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
+int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	uint32_t err = 0, tested = 0, i = 0;
 	LED_t off = {0x0,0x0,0x0};
 	LED_t on = {0x0,0x3F,0x0};
@@ -156,9 +156,9 @@ void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 
 	if (err) {
 		oledPutString("not okay:\n ", OLED_RED);
-		oledPutString(hex2Str(err*4, 6, hexBuf), OLED_RED);
+		oledPutString(hex2Str(err, 6, hexBuf), OLED_RED);
 		oledPutString("h/", OLED_RED);
-		oledPutString(hex2Str(tested*4, 6, hexBuf), OLED_RED);
+		oledPutString(hex2Str(tested, 6, hexBuf), OLED_RED);
 		oledPutString("h\n", OLED_RED);
 	} else {
 		oledPutString("okay\n", OLED_GREEN);
@@ -173,19 +173,23 @@ void testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 		f_close(logFile);
 		free(logFile);
 	}
+	return (int) err;
 }
 
-void testSDCARD() {
+int testSDCARD() {
 	oledPutString("SDCARD: ", OLED_GREEN);
 	termPutString("\r-- testing SD-Card --\r");
+	int res = 0; //result code
 
 	retSD = BSP_SD_Init();
 	if (retSD == MSD_ERROR_SD_NOT_PRESENT) {
 		oledPutString("notFound\n", OLED_RED);
 		termPutString("no SD-Card in the slot\r");
+		res = 1;
 	} else if (retSD != MSD_OK) {
 		oledPutString("not okay\n", OLED_RED);
 		termPutString("encountered an error during initialization of SD-Card\r");
+		res = 2;
 	} else {
 		FRESULT fatRes = FR_OK;
 		oledPutString("okay\n mnt to ", OLED_GREEN);
@@ -199,6 +203,7 @@ void testSDCARD() {
 		fatRes = f_mount(&SDFatFS, (const TCHAR*) SDPath, 1);
 		if (fatRes != FR_OK) {
 			termReportFSfail(fatRes);
+			res = 3;
 		} else {
 			TCHAR fileName[9] = {'t','e','s','t','.','t','x','t',0};
 			FIL testFile;
@@ -207,6 +212,7 @@ void testSDCARD() {
 			fatRes = f_open(&testFile, fileName, FA_CREATE_ALWAYS | FA_WRITE);
 			if (fatRes != FR_OK) {
 				termReportFSfail(fatRes);
+				res = 4;
 			} else {
 				uint8_t wText[12] = "Hello world";
 				UINT bytesWritten = 0;
@@ -218,12 +224,14 @@ void testSDCARD() {
 				f_close(&testFile);
 				if (fatRes != FR_OK) {
 					termReportFSfail(fatRes);
+					res = 5;
 				} else {
 					termPutString(" success - closing file\rtry opening test.txt for reading operation\r");
 
 					fatRes = f_open(&testFile, fileName, FA_READ);
 					if (fatRes != FR_OK) {
 						termReportFSfail(fatRes);
+						res = 6;
 					} else {
 						uint8_t rText[255] = {0};
 						UINT bytesRead = 0;
@@ -232,6 +240,7 @@ void testSDCARD() {
 						fatRes = f_read(&testFile, rText, 255, &bytesRead);
 						if (fatRes != FR_OK) {
 							termReportFSfail(fatRes);
+							res = 7;
 						} else {
 							int i, mismatch = 0;
 							for (i = 0; i < bytesWritten; ++i)
@@ -239,6 +248,7 @@ void testSDCARD() {
 									++mismatch;
 							if (mismatch) {
 								termPutString(" fail - text mismatch");
+								res = 8;
 							} else {
 								SD_Rdy = 1;
 								termPutString(" success");
@@ -255,23 +265,27 @@ void testSDCARD() {
 			fatRes = f_unlink(fileName);
 			if (fatRes == FR_NO_FILE || fatRes == FR_NO_PATH) {
 				termPutString(" no file to delete\r");
+				res = 9;
 			} else if (fatRes != FR_OK) {
 				termReportFSfail(fatRes);
+				res = 10;
 			} else {
 				termPutString(" success\r");
 			}
 		}
 	}
 	termPutString("-- SD-CARD check done --\r");
-	if(SD_Rdy){
+	if (SD_Rdy) {
 		oledPutString("okay\n", OLED_GREEN);
-	}else{
+	} else {
 		oledPutString("fail\n", OLED_GREEN);
 	}
+	return res;
 }
 
-void testAD5592R(SPI_HandleTypeDef *hspi) {
-
+int testAD5592R(SPI_HandleTypeDef *hspi) {
+	int res = 0; //result code
+	return res;
 }
 void demoAD5592R(SPI_HandleTypeDef *hspi) {
 	TickType_t xLastWakeTime;
@@ -305,9 +319,9 @@ void demoAD5592R(SPI_HandleTypeDef *hspi) {
 		input = ad5592rGetPin(pin);
 		pin.number = 2; //mirror of pin 1
 		ad5592rSetPin(pin, input);
-		pin.number = 3; //square wave
-		ad5592rSetPin(pin, i<500);
-		pin.number = 4; //square wave
+		pin.number = 3; //fast square wave
+		ad5592rSetPin(pin, i&1);
+		pin.number = 4; //slow square wave
 		ad5592rSetPin(pin, i>=500);
 		pin.number = 5; //digital test input
 		input = ad5592rGetPin(pin);
@@ -315,7 +329,7 @@ void demoAD5592R(SPI_HandleTypeDef *hspi) {
 		ad5592rSetPin(pin, input);
 		pin.number = 7; //mirror of pin 5 (open drain)
 		ad5592rSetPin(pin, input);
-		if (++i == 1000) {
+		if ((++i) >= 1000) {
 			i = 0;
 		}
 		ad5592rUpdate();

@@ -34,9 +34,9 @@
 //type definitions
 
 //function prototypes
-void testSDRAM(SDRAM_HandleTypeDef *hsdram);
-void testSDCARD();
-void testAD5592R(SPI_HandleTypeDef *hspi);
+int testSDRAM(SDRAM_HandleTypeDef *hsdram);
+int testSDCARD();
+int testAD5592R(SPI_HandleTypeDef *hspi);
 void demoAD5592R(SPI_HandleTypeDef *hspi);
 
 #endif /*_TESTROUTINES_H*/
