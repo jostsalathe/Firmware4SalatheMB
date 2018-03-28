@@ -52,12 +52,8 @@ void appInit() {
 	termPutString("\r--- testing peripherals ---\r");
 
 	testSDCARD();
-	for (i = 0; i<128; ++i) {
-		char str[10] = {0};
-		termPutString("\rRAM check no ");
-		termPutString(hex2Str(i, 3, str));
-		testSDRAM(&hsdram1);
-	}
+	testSDRAM(&hsdram1);
+	testAD5592R(&hspi6);
 
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");

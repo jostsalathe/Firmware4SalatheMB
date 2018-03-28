@@ -42,8 +42,12 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_PROGRAMMED ((uint16_t)0x0000) //bit9
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200) //bit9
 
+//variables
+SDRAM_HandleTypeDef* hsdram;
+
 //functions
-void sdramSetup(SDRAM_HandleTypeDef* hsdram) {
+void sdramSetup(SDRAM_HandleTypeDef* handle) {
+	hsdram = handle;
 	__IO uint32_t tmpmrd =0;
 	FMC_SDRAM_CommandTypeDef Cmd;
 	FMC_SDRAM_CommandTypeDef *Command = &Cmd;
