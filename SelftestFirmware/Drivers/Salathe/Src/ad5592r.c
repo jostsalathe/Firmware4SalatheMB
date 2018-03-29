@@ -32,7 +32,8 @@ uint16_t ad5592rGPOod[4] = {0,0,0,0};
 uint16_t ad5592rADCpins[4] = {0,0,0,0};
 uint16_t ad5592rDACpins[4] = {0,0,0,0};
 
-uint16_t ad5592rPinVals[32];
+uint16_t ad5592rPinValsW[32];
+uint16_t ad5592rPinValsR[32];
 
 uint16_t ad5592rSine[AD5592R_N_SINE] = {
 		0x800,0x80c,0x819,0x826,0x833,0x840,0x84d,0x85a,
@@ -174,8 +175,8 @@ uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
 	}
 	__HAL_SPI_ENABLE(hspi);
 	//flush the SPI RXFIFO
-	AD5592R_SPI_READ(ad5592rPinVals[0]);
-	AD5592R_SPI_READ(ad5592rPinVals[0]);
+	AD5592R_SPI_READ(ad5592rPinValsR[0]);
+	AD5592R_SPI_READ(ad5592rPinValsR[0]);
 	//check if all AD5592Rs respond correctly
 	for (i=0; i<4; ++i) {
 		if (AD5592R_CHIP_ACTIVE(i)) {
@@ -195,7 +196,9 @@ uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
 	}
 	//write initial pin configuration
 	for (i=0; i<32; ++i) {
-		ad5592rPinVals[i] = 0;
+		ad5592rPinValsW[i] = 0;
+		ad5592rPinValsR[i] = 0;
+		ad5592rSelectPinMode((ad5592rPin_t) (uint8_t) i, ad5592rDigitalInPullDown);
 	}
 	ad5592rWritePinModes();
 	return ad5592rChipsActive;
@@ -334,11 +337,11 @@ void ad5592rWritePinModes() {
 }
 
 void ad5592rSetPin(ad5592rPin_t pin, uint16_t val){
-	ad5592rPinVals[pin.number] = val;
+	ad5592rPinValsW[pin.number] = val;
 }
 
 uint16_t ad5592rGetPin(ad5592rPin_t pin){
-	return ad5592rPinVals[pin.number];
+	return ad5592rPinValsR[pin.number];
 }
 
 void ad5592rUpdate(){
@@ -351,7 +354,7 @@ void ad5592rUpdate(){
 			uint16_t pinVals[8];
 			//save the set values locally
 			for (pin=0; pin<8; ++pin) {
-				pinVals[pin] = ad5592rPinVals[chip*8+pin];
+				pinVals[pin] = ad5592rPinValsW[chip*8+pin];
 			}
 			//handle digital pins
 			if (ad5592rGPIpins[chip]) {
@@ -378,12 +381,12 @@ void ad5592rUpdate(){
 				AD5592R_DESELECT(0);
 				AD5592R_SPI_READ(dacMsg.reg);
 
-				//send prepared command (digital output data or nop)
+				//send prepared command (digital output data or nop) and receive digital input data
 				cmdMsg = ad5592rTxRxReg(chip, cmdMsg);
 
 				for (pin=0; pin<8; ++pin) {
 					if (ad5592rGPIpins[chip] & 1<<pin) {
-						ad5592rPinVals[chip*8+pin] = (cmdMsg.reg>>pin)&1;
+						ad5592rPinValsR[chip*8+pin] = (cmdMsg.reg>>pin)&1;
 					}
 				}
 			}
@@ -407,6 +410,7 @@ void ad5592rUpdate(){
 				}
 			}
 
+			//send DAC values
 			if (ad5592rDACpins[chip]) {
 				dacMsg.dacWrite.DnC = AD5592R_SEND_DATA;
 				for (pin=0; pin<8; ++pin) {
@@ -418,7 +422,7 @@ void ad5592rUpdate(){
 
 						//treat received data
 						if (iAdc<nAdc && iAdc>=0) { //to skip first rx after starting ADC sequence
-							ad5592rPinVals[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
+							ad5592rPinValsR[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
 						}
 						++iAdc;
 					}
@@ -430,7 +434,7 @@ void ad5592rUpdate(){
 				cmdMsg = ad5592rTxRxReg(chip, dacMsg);
 				//treat received data
 				if (iAdc>=0) { //to skip first rx after starting ADC sequence
-					ad5592rPinVals[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
+					ad5592rPinValsR[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
 				}
 				++iAdc;
 			}

@@ -17,22 +17,24 @@
 #include "testRoutines.h"
 
 //defines
-#define TEST_TYPE uint32_t
+#define TEST_RAM_TYPE uint32_t
 
-#define RAM_TEST_RAND 0
-#define RAM_TEST_ALTER 1
-#define RAM_TESTPATTERN RAM_TEST_RAND
+#define TEST_RAM_RAND 0 //write random values to RAM
+#define TEST_RAM_ALTER 1 //write alternating bit pattern to RAM
+#define TEST_RAM_PATTERN TEST_RAM_RAND //pattern to use
 
-#define RAM_TEST_FULL
-#define RAM_TEST_CHUNK_SIZE 0x2000 //variables of TEST_TYPE (0x2000 byte for one row)
-#define RAM_TEST_END SDRAM_SIZE //end the test right before this address offset
+#define TEST_RAM_FULL //check whole RAM instead of only one chunk of random addresses
+#define TEST_RAM_CHUNK_SIZE 0x2000 //variables of TEST_TYPE (0x2000 byte for one row)
+#define TEST_RAM_END SDRAM_SIZE //end the test right before this address offset
 
-//#define RAM_TEST_LOG_ALL
-#define RAM_TEST_PRGR_INTER_MASK 0xFF
+//#define TEST_RAM_LOG_ALL //write all tested addresses into log file not only those who failed
+#define TEST_RAM_PRGR_INTER_MASK 0xFF //interval mask for progress display
+
+#define TEST_AD5592R_MAX_DELTA 0x2A //maximum deviation of read ADC value from written DAC value
 
 //functions
 void logSDRAMline(FIL *logFile, uint32_t addr, uint32_t dataW, uint32_t dataR) {
-#ifndef RAM_TEST_LOG_ALL
+#ifndef TEST_RAM_LOG_ALL
 	if (dataW != dataR) {
 #endif
 	char hexBuf[9] = {0};
@@ -42,20 +44,20 @@ void logSDRAMline(FIL *logFile, uint32_t addr, uint32_t dataW, uint32_t dataR) {
 	logStr(logFile, hex2Str(dataW, 8, hexBuf));
 	logStr(logFile, "->0x");
 	logStr(logFile, hex2Str(dataR, 8, hexBuf));
-#ifdef RAM_TEST_LOG_ALL
+#ifdef TEST_RAM_LOG_ALL
 	if (dataW != dataR) {
 #endif
 	logStr(logFile, " ERROR");
-#ifdef RAM_TEST_LOG_ALL
+#ifdef TEST_RAM_LOG_ALL
 	}
 #endif
 	logStr(logFile, "\r");
-#ifndef RAM_TEST_LOG_ALL
+#ifndef TEST_RAM_LOG_ALL
 	}
 #endif
 }
 
-int addrArrayContains(TEST_TYPE **arr, int size, TEST_TYPE *val) {
+int addrArrayContains(TEST_RAM_TYPE **arr, int size, TEST_RAM_TYPE *val) {
 	int i, cnt=0;
 	for (i=0; i<size; ++i) {
 		if (arr[i] == val) {
@@ -69,26 +71,26 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	uint32_t err = 0, tested = 0, i = 0;
 	LED_t off = {0x0,0x0,0x0};
 	LED_t on = {0x0,0x3F,0x0};
-#ifdef RAM_TEST_FULL
-	TEST_TYPE *addr;
+#ifdef TEST_RAM_FULL
+	TEST_RAM_TYPE *addr;
 #else
-	TEST_TYPE **addrs;
+	TEST_RAM_TYPE **addrs;
 #endif
-	TEST_TYPE *dataW;
-	TEST_TYPE *dataR;
+	TEST_RAM_TYPE *dataW;
+	TEST_RAM_TYPE *dataR;
 	FIL *logFile;
 	char hexBuf[9] = {'\0'};
 
-	dataW = malloc(sizeof(TEST_TYPE) * RAM_TEST_CHUNK_SIZE);
-	dataR = malloc(sizeof(TEST_TYPE) * RAM_TEST_CHUNK_SIZE);
-#ifndef RAM_TEST_FULL
-	addrs = malloc(sizeof(TEST_TYPE *) * RAM_TEST_CHUNK_SIZE);
+	dataW = malloc(sizeof(TEST_RAM_TYPE) * TEST_RAM_CHUNK_SIZE);
+	dataR = malloc(sizeof(TEST_RAM_TYPE) * TEST_RAM_CHUNK_SIZE);
+#ifndef TEST_RAM_FULL
+	addrs = malloc(sizeof(TEST_RAM_TYPE *) * TEST_RAM_CHUNK_SIZE);
 #endif
 	logFile = malloc(sizeof(FIL));
 	oledPutString("SDRAM: ", OLED_GREEN);
 	termPutString("\r-- testing SDRAM --\r");
 	if (!dataW || !dataR
-#ifndef RAM_TEST_FULL
+#ifndef TEST_RAM_FULL
 			|| !addrs
 #endif
 			|| !logFile) {
@@ -113,56 +115,56 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 
 	ledProgress(0.0, on, off);
 	oledProgress(0.0, OLED_GREEN);
-#ifdef RAM_TEST_FULL
-	for (addr = (TEST_TYPE *) SDRAM_ADDR; addr+RAM_TEST_CHUNK_SIZE <= (TEST_TYPE *) (RAM_TEST_END+SDRAM_ADDR); addr += RAM_TEST_CHUNK_SIZE) {
-		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(RAM_TEST_END), on, off);
-		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(RAM_TEST_END), OLED_GREEN);
-#ifdef RAM_TEST_LOG_ALL
+#ifdef TEST_RAM_FULL
+	for (addr = (TEST_RAM_TYPE *) SDRAM_ADDR; addr+TEST_RAM_CHUNK_SIZE <= (TEST_RAM_TYPE *) (TEST_RAM_END+SDRAM_ADDR); addr += TEST_RAM_CHUNK_SIZE) {
+		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_RAM_END), on, off);
+		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_RAM_END), OLED_GREEN);
+#ifdef TEST_RAM_LOG_ALL
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
 		termPutString("\r");
 #endif
 #endif
-		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
+		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
 			uint64_t randNum = 0;
-#ifndef RAM_TEST_FULL
+#ifndef TEST_RAM_FULL
 			do {
 				HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t *) &randNum);
 				randNum *= SDRAM_SIZE-1;
 				randNum /= 4294967295;
 				randNum &= ~0b11;
 				randNum += SDRAM_ADDR;
-			} while(addrArrayContains(addrs, i+1, (TEST_TYPE *) (uint32_t) randNum));
-			addrs[i] = (TEST_TYPE *) (uint32_t) randNum;
+			} while(addrArrayContains(addrs, i+1, (TEST_RAM_TYPE *) (uint32_t) randNum));
+			addrs[i] = (TEST_RAM_TYPE *) (uint32_t) randNum;
 #endif
-#if RAM_TESTPATTERN == RAM_TEST_RAND
+#if TEST_RAM_PATTERN == TEST_RAM_RAND
 			HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t *) &randNum);
-			dataW[i] = (TEST_TYPE) randNum;
-#elif RAM_TESTPATTERN == RAM_TEST_ALTER
+			dataW[i] = (TEST_RAM_TYPE) randNum;
+#elif TEST_RAM_PATTERN == TEST_RAM_ALTER
 			dataW[i] = i%2?0x55555555:0xAAAAAAAA;
 #else
 			dataW[i] = i;
 #endif
 		}
-#ifdef RAM_TEST_FULL
-		while (HAL_SDRAM_Write_32b(hsdram, addr, dataW, RAM_TEST_CHUNK_SIZE));
-		while (HAL_SDRAM_Read_32b(hsdram, addr, dataR, RAM_TEST_CHUNK_SIZE));
+#ifdef TEST_RAM_FULL
+		while (HAL_SDRAM_Write_32b(hsdram, addr, dataW, TEST_RAM_CHUNK_SIZE));
+		while (HAL_SDRAM_Read_32b(hsdram, addr, dataR, TEST_RAM_CHUNK_SIZE));
 #else
 		ledProgress(0.125, on, off);
 		oledProgress(0.125, OLED_GREEN);
-		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
+		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
 			HAL_SDRAM_Write_32b(hsdram, addrs[i], dataW+i, 1);
 		}
-		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
+		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
 			HAL_SDRAM_Read_32b(hsdram, addrs[i], dataR+i, 1);
 		}
 		ledProgress(0.25, on, off);
 		oledProgress(0.25, OLED_GREEN);
 #endif
-		for (i = 0; i < RAM_TEST_CHUNK_SIZE; ++i) {
-#ifndef RAM_TEST_FULL
-			if ((i&RAM_TEST_PRGR_INTER_MASK)==0) {
-				float progress = 0.75*i/RAM_TEST_CHUNK_SIZE+0.25;
+		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
+#ifndef TEST_RAM_FULL
+			if ((i&TEST_RAM_PRGR_INTER_MASK)==0) {
+				float progress = 0.75*i/TEST_RAM_CHUNK_SIZE+0.25;
 				ledProgress(progress, on, off);
 				oledProgress(progress, OLED_GREEN);
 			}
@@ -174,8 +176,8 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 				++err;
 			}
 		}
-		tested += RAM_TEST_CHUNK_SIZE;
-#ifdef RAM_TEST_FULL
+		tested += TEST_RAM_CHUNK_SIZE;
+#ifdef TEST_RAM_FULL
 	}
 #endif
 	ledProgress(1.0, on, off);
@@ -197,7 +199,7 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 		oledPutString("okay\n", OLED_GREEN);
 	}
 
-#ifndef RAM_TEST_FULL
+#ifndef TEST_RAM_FULL
 	free(addrs);
 #endif
 	free(dataW);
@@ -311,15 +313,203 @@ int testSDCARD() {
 	if (SD_Rdy) {
 		oledPutString("okay\n", OLED_GREEN);
 	} else {
-		oledPutString("fail\n", OLED_GREEN);
+		oledPutString("fail\n", OLED_RED);
 	}
 	return res;
 }
 
 int testAD5592R(SPI_HandleTypeDef *hspi) {
-	int res = 0; //result code
-	return res;
+	ad5592rPin_t pin;
+	char str[11] = {0};
+	uint8_t chipStatus; // [0:3]=chipActive, [4:7]=chipIOfault
+	chipStatus = AD5592R_CHIP0_ACTIVE
+			| AD5592R_CHIP1_ACTIVE
+			| AD5592R_CHIP2_ACTIVE
+			| AD5592R_CHIP3_ACTIVE;
+
+	oledPutString("AD5592R: ", OLED_GREEN);
+	termPutString("\r-- testing AD5592Rs --\rSPI response test yields:\r");
+
+	chipStatus = ad5592rSetup(hspi, chipStatus);
+	for (pin.number = 0; pin.number < 32; pin.number += 8) {
+		termPutString(" AD5592R chip ");
+		termPutString(uint2Str(pin.chip, 1, str));
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString(": present and responding correctly\r");
+		} else { //chip inactive
+			termPutString(": not present or not responding correctly\r");
+		}
+	}
+
+	termPutString("\rChecking pin functions of active AD5592Rs:\r pin number   ");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString("|");
+			termPutString(uint2Str(pin.chip, 1, str));
+			termPutString(".");
+			termPutString(uint2Str(pin.pin, 1, str));
+		}
+	}
+	termPutString("\r -------------");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString("+---");
+		}
+	}
+	termPutString("\r");
+
+	//set pin config for digital IO
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+		}
+	}
+	ad5592rWritePinModes();
+
+	//write pins HIGH
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSetPin(pin, 1);
+		}
+	}
+	ad5592rUpdate();
+	//read pins and compare to written
+	ad5592rUpdate();
+	termPutString(" digital high");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString(" | ");
+			if (ad5592rGetPin(pin)==1) { //good
+				termPutString("1");
+			} else { //bad
+				termPutString("0");
+				chipStatus |= 1<<(4+pin.chip);
+			}
+		}
+	}
+	termPutString("\r");
+
+	//write pins LOW
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSetPin(pin, 0);
+		}
+	}
+	ad5592rUpdate();
+	//read pins and compare to written
+	ad5592rUpdate();
+	termPutString(" digital low ");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString(" | ");
+			if (ad5592rGetPin(pin)==0) { //good
+				termPutString("0");
+			} else { //bad
+				termPutString("1");
+				chipStatus |= 1<<(4+pin.chip);
+			}
+		}
+	}
+	termPutString("\r");
+
+	//set pin config for analog IO
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSelectPinMode(pin, ad5592rAnalogInOut);
+		}
+	}
+	ad5592rWritePinModes();
+
+	//write DACs max
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSetPin(pin, 0xFFF);
+		}
+	}
+	ad5592rUpdate();
+	//read ADCs and compare to written DAC
+	ad5592rUpdate();
+	termPutString(" analog max   ");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString("|");
+			termPutString(hex2Str(ad5592rGetPin(pin), 3, str));
+			if (ad5592rGetPin(pin)<(0xFFF-TEST_AD5592R_MAX_DELTA)) { //bad
+				chipStatus |= 1<<(4+pin.chip);
+			}
+		}
+	}
+	termPutString("\r");
+
+	//write DACs min
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSetPin(pin, 0x0);
+		}
+	}
+	ad5592rUpdate();
+	//read ADCs and compare to written DAC
+	ad5592rUpdate();
+	termPutString(" analog min   ");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString("|");
+			termPutString(hex2Str(ad5592rGetPin(pin), 3, str));
+			if (ad5592rGetPin(pin)>(0x0+TEST_AD5592R_MAX_DELTA)) { //bad
+				chipStatus |= 1<<(4+pin.chip);
+			}
+		}
+	}
+	termPutString("\r");
+
+	//write DACs mid
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			ad5592rSetPin(pin, 0x800);
+		}
+	}
+	ad5592rUpdate();
+	//read ADCs and compare to written DAC
+	ad5592rUpdate();
+	termPutString(" analog mid   ");
+	for (pin.number = 0; pin.number < 32; ++pin.number) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString("|");
+			termPutString(hex2Str(ad5592rGetPin(pin), 3, str));
+			if (ad5592rGetPin(pin)<(0x800-TEST_AD5592R_MAX_DELTA)) { //too low
+				chipStatus |= 1<<(4+pin.chip);
+			} else if (ad5592rGetPin(pin)>(0x800+TEST_AD5592R_MAX_DELTA)) { //too high
+				chipStatus |= 1<<(4+pin.chip);
+			}
+		}
+	}
+	termPutString("\r");
+
+	//evaluate results
+	termPutString("\rBased on a maximum deviation of +-");
+	termPutString(hex2Str(TEST_AD5592R_MAX_DELTA, 3, str));
+	termPutString("h between written DAC value\rand read ADC value, the active AD5592Rs performed as follows:\r");
+	for (pin.number = 0; pin.number < 32; pin.number += 8) {
+		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
+			termPutString(" AD5592R chip ");
+			termPutString(uint2Str(pin.chip, 1, str));
+			termPutString(": ");
+			if ((1 << (4 + pin.chip)) & chipStatus) { //IO fault
+				termPutString("at least one IO deviates too much\r");
+				oledPutString("f", OLED_RED);
+			} else { //IO okay
+				termPutString("all IOs perform inside given tolerance\r");
+				oledPutString("o", OLED_GREEN);
+			}
+		} else { //chip inactive
+			oledPutString("n", oledColor565(0x33,0x33,0x0));
+		}
+	}
+	oledPutString("\n", OLED_GREEN);
+	termPutString("-- AD5592Rs check done --\r");
+	return (int) chipStatus;
 }
+
 void demoAD5592R(SPI_HandleTypeDef *hspi) {
 	TickType_t xLastWakeTime;
 	ad5592rPin_t pin;
