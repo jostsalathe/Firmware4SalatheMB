@@ -25,6 +25,7 @@ __IO uint32_t* ad5592rCsRegs[/*4*/] = {&(SPI6_CS_0_GPIO_Port->BSRR), &(SPI6_CS_1
 __IO uint16_t* ad5592rSpiDR;
 __IO uint32_t* ad5592rSpiSR;
 
+uint16_t ad5592rTRIpins[4] = {0,0,0,0};
 uint16_t ad5592rGPIpins[4] = {0,0,0,0};
 uint16_t ad5592rGPIpd[4] = {0,0,0,0};
 uint16_t ad5592rGPOpins[4] = {0,0,0,0};
@@ -198,21 +199,33 @@ uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
 	for (i=0; i<32; ++i) {
 		ad5592rPinValsW[i] = 0;
 		ad5592rPinValsR[i] = 0;
-		ad5592rSelectPinMode((ad5592rPin_t) (uint8_t) i, ad5592rDigitalInPullDown);
+		ad5592rSetPinMode((ad5592rPin_t) (uint8_t) i, ad5592rDigitalInPullDown);
 	}
-	ad5592rWritePinModes();
+	ad5592rUpdatePinModes();
 	return ad5592rChipsActive;
 }
 
-void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
+void ad5592rSetPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 	int pinmask = 1<<pin.pin;
 	int chip =  pin.chip;
 	if (!AD5592R_CHIP_ACTIVE(chip)) return;
 	switch(mode) {
+	case ad5592rThreeState: {
+		//activate TRI function
+		ad5592rTRIpins[chip] |= pinmask;
+		//deactivate other functions
+		ad5592rGPIpins[chip] &= ~pinmask;
+		ad5592rGPIpd[chip] &= ~pinmask;
+		ad5592rGPOpins[chip] &= ~pinmask;
+		ad5592rGPOod[chip] &= ~pinmask;
+		ad5592rADCpins[chip] &= ~pinmask;
+		ad5592rDACpins[chip] &= ~pinmask;
+		break;}
 	case ad5592rDigitalIn: {
 		//activate GPI function
 		ad5592rGPIpins[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rGPOpins[chip] &= ~pinmask;
 		ad5592rGPOod[chip] &= ~pinmask;
@@ -224,6 +237,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		ad5592rGPIpins[chip] |= pinmask;
 		ad5592rGPIpd[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPOpins[chip] &= ~pinmask;
 		ad5592rGPOod[chip] &= ~pinmask;
 		ad5592rADCpins[chip] &= ~pinmask;
@@ -234,6 +248,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		ad5592rGPOpins[chip] |= pinmask;
 		ad5592rGPIpins[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rGPOod[chip] &= ~pinmask;
 		ad5592rADCpins[chip] &= ~pinmask;
@@ -245,6 +260,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		ad5592rGPOpins[chip] |= pinmask;
 		ad5592rGPOod[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rADCpins[chip] &= ~pinmask;
 		ad5592rDACpins[chip] &= ~pinmask;
@@ -253,6 +269,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		//activate ADC function
 		ad5592rADCpins[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rGPOpins[chip] &= ~pinmask;
@@ -263,6 +280,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		//activate DAC function
 		ad5592rDACpins[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rGPOpins[chip] &= ~pinmask;
@@ -274,6 +292,7 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 		ad5592rDACpins[chip] |= pinmask;
 		ad5592rADCpins[chip] |= pinmask;
 		//deactivate other functions
+		ad5592rTRIpins[chip] &= ~pinmask;
 		ad5592rGPIpins[chip] &= ~pinmask;
 		ad5592rGPIpd[chip] &= ~pinmask;
 		ad5592rGPOpins[chip] &= ~pinmask;
@@ -283,8 +302,9 @@ void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode) {
 	}
 }
 
-void ad5592rWritePinModes() {
+void ad5592rUpdatePinModes() {
 	//for detecting changes and only transmitting those
+	static uint16_t lastAd5592rTRIpins[4] = {1,1,1,1};
 	static uint16_t lastAd5592rGPIpins[4] = {1,1,1,1};
 	static uint16_t lastAd5592rGPIpd[4] = {1,1,1,1};
 	static uint16_t lastAd5592rGPOpins[4] = {1,1,1,1};
@@ -296,6 +316,12 @@ void ad5592rWritePinModes() {
 	msg.cmd.DnC = AD5592R_SEND_CMD;
 	for (chip=0; chip<4; ++chip){
 		if (AD5592R_CHIP_ACTIVE(chip)) {
+			if (lastAd5592rTRIpins[chip] != ad5592rTRIpins[chip]) {
+				msg.cmd.addr = AD5592R_REG_GPO_TRI;
+				msg.cmd.data = ad5592rTRIpins[chip];
+				lastAd5592rTRIpins[chip] = ad5592rTRIpins[chip];
+				ad5592rTxRxReg(chip, msg);
+			}
 			if (lastAd5592rGPIpins[chip] != ad5592rGPIpins[chip]) {
 				msg.cmd.addr = AD5592R_REG_GPI_PINS;
 				msg.cmd.data = ad5592rGPIpins[chip];

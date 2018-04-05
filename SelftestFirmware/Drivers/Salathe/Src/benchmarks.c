@@ -22,9 +22,9 @@ void ad5592rLibBenchmarkDAC(SPI_HandleTypeDef *hspi) {
 	ad5592rPin_t pin;
 	ad5592rSetup(hspi, 0xF);
 	for (pin.number = 0; pin.number<32; ++pin.number) {
-		ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+		ad5592rSetPinMode(pin, ad5592rAnalogOut);
 	}
-	ad5592rWritePinModes();
+	ad5592rUpdatePinModes();
 	int i = 0, val;
 	while (1) {
 		val = ad5592rSine[i];
@@ -35,8 +35,8 @@ void ad5592rLibBenchmarkDAC(SPI_HandleTypeDef *hspi) {
 	ad5592rPin_t pin;
 	ad5592rSetup(hspi, 0x1);
 	pin.number = 0;
-	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
-	ad5592rWritePinModes();
+	ad5592rSetPinMode(pin, ad5592rAnalogOut);
+	ad5592rUpdatePinModes();
 	int i = 0;
 	while (1) {
 		ad5592rSetPin(pin, ad5592rSine[i]);

@@ -51,7 +51,7 @@ void buttonSetup() {
 	buttonRegisteredFalling = 0;
 }
 
-void pollButtons() {
+void buttonPoll() {
 	uint16_t mask = 1;
 	buttonLastState = buttonState;
 	buttonState = 0;
@@ -76,7 +76,7 @@ void pollButtons() {
 uint8_t buttonRising(uint8_t buttonNumber) {
 	uint16_t mask = 1;
 	mask <<= buttonNumber;
-	pollButtons();
+	buttonPoll();
 	if (buttonRegisteredRising & mask) {
 		buttonRegisteredRising &= ~mask;
 		return 1;
@@ -87,7 +87,7 @@ uint8_t buttonRising(uint8_t buttonNumber) {
 uint8_t buttonFalling(uint8_t buttonNumber) {
 	uint16_t mask = 1;
 	mask <<= buttonNumber;
-	pollButtons();
+	buttonPoll();
 	if (buttonRegisteredFalling & mask) {
 		buttonRegisteredFalling &= ~mask;
 		return 1;
@@ -96,6 +96,6 @@ uint8_t buttonFalling(uint8_t buttonNumber) {
 }
 
 uint8_t buttonRead(uint8_t buttonNumber) {
-	pollButtons();
+	buttonPoll();
 	return 1 & (buttonState >> buttonNumber);
 }

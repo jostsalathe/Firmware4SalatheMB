@@ -36,7 +36,7 @@
 //type definitions
 
 //function prototypes
-void pollButtons();
+void buttonPoll();
 void buttonSetup();
 uint8_t buttonRising(uint8_t buttonNumber);
 uint8_t buttonFalling(uint8_t buttonNumber);

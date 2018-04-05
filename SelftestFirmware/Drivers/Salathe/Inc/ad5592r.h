@@ -110,6 +110,7 @@ typedef union {
 }ad5592rPin_t;
 
 typedef enum {
+	ad5592rThreeState,
 	ad5592rDigitalIn,
 	ad5592rDigitalInPullDown,
 	ad5592rDigitalOut,
@@ -123,9 +124,9 @@ typedef enum {
 //initial setup of all AD5592Rs
 uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips);
 //select mode of one pin locally
-void ad5592rSelectPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode);
+void ad5592rSetPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode);
 //send all pin mode changes to AD5592Rs
-void ad5592rWritePinModes();
+void ad5592rUpdatePinModes();
 //change pin value locally
 void ad5592rSetPin(ad5592rPin_t pin, uint16_t val);
 //get locally saved pin value

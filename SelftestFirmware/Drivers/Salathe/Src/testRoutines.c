@@ -361,10 +361,10 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 	//set pin config for digital IO
 	for (pin.number = 0; pin.number < 32; ++pin.number) {
 		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
-			ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+			ad5592rSetPinMode(pin, ad5592rDigitalOut);
 		}
 	}
-	ad5592rWritePinModes();
+	ad5592rUpdatePinModes();
 
 	//write pins HIGH
 	for (pin.number = 0; pin.number < 32; ++pin.number) {
@@ -415,10 +415,10 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 	//set pin config for analog IO
 	for (pin.number = 0; pin.number < 32; ++pin.number) {
 		if (AD5592R_CHIP_ACTIVE(pin.chip)) { //chip active
-			ad5592rSelectPinMode(pin, ad5592rAnalogInOut);
+			ad5592rSetPinMode(pin, ad5592rAnalogInOut);
 		}
 	}
-	ad5592rWritePinModes();
+	ad5592rUpdatePinModes();
 
 	//write DACs max
 	for (pin.number = 0; pin.number < 32; ++pin.number) {
@@ -505,6 +505,15 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 			oledPutString("n", oledColor565(0x33,0x33,0x0));
 		}
 	}
+
+	//reset pin modes to input with pull down
+	for (pin.number = 0; pin.number < 32; pin.number += 8) {
+		ad5592rSetPinMode(pin, ad5592rDigitalInPullDown);
+		ad5592rSetPin(pin, 0);
+	}
+	ad5592rUpdate();
+	ad5592rUpdatePinModes();
+
 	oledPutString("\n", OLED_GREEN);
 	termPutString("-- AD5592Rs check done --\r");
 	return (int) chipStatus;
@@ -516,22 +525,22 @@ void demoAD5592R(SPI_HandleTypeDef *hspi) {
 
 	ad5592rSetup(hspi, AD5592R_CHIP0_ACTIVE);
 	pin.number = 0; //sine output
-	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	ad5592rSetPinMode(pin, ad5592rAnalogOut);
 	pin.number = 1; //analog test input
-	ad5592rSelectPinMode(pin, ad5592rAnalogIn);
+	ad5592rSetPinMode(pin, ad5592rAnalogIn);
 	pin.number = 2; //mirror of pin 1
-	ad5592rSelectPinMode(pin, ad5592rAnalogOut);
+	ad5592rSetPinMode(pin, ad5592rAnalogOut);
 	pin.number = 3; //square wave
-	ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+	ad5592rSetPinMode(pin, ad5592rDigitalOut);
 	pin.number = 4; //square wave
-	ad5592rSelectPinMode(pin, ad5592rDigitalOutOpenDrain);
+	ad5592rSetPinMode(pin, ad5592rDigitalOutOpenDrain);
 	pin.number = 5; //digital test input
-	ad5592rSelectPinMode(pin, ad5592rDigitalIn);
+	ad5592rSetPinMode(pin, ad5592rDigitalIn);
 	pin.number = 6; //mirror of pin 5 (push/pull)
-	ad5592rSelectPinMode(pin, ad5592rDigitalOut);
+	ad5592rSetPinMode(pin, ad5592rDigitalOut);
 	pin.number = 7; //mirror of pin 5 (open drain)
-	ad5592rSelectPinMode(pin, ad5592rDigitalOutOpenDrain);
-	ad5592rWritePinModes();
+	ad5592rSetPinMode(pin, ad5592rDigitalOutOpenDrain);
+	ad5592rUpdatePinModes();
 	int i = 0;
 	xLastWakeTime = xTaskGetTickCount();
 	while (1) {
