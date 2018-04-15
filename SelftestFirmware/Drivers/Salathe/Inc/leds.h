@@ -22,15 +22,15 @@
 #include "task.h"
 
 //global variables and defines
-#define OFF_RED 0
-#define OFF_GREEN 1
-#define OFF_BLUE 2
-extern const uint8_t WS2812Bits[];
-#define NLEDS 8
-#define PREDATA 0
-#define POSTDATA 8
-#define NDATA NLEDS*3 //pure LED data length
-#define NSDATA PREDATA+NDATA*4+POSTDATA //serial data length
+#define LEDS_OFF_RED 0
+#define LEDS_OFF_GREEN 1
+#define LEDS_OFF_BLUE 2
+extern const uint8_t LEDS_BitTimings[];
+#define LEDS_N 8
+#define LEDS_PREDATA 0
+#define LEDS_POSTDATA 8
+#define LEDS_DATA_N LEDS_N*3 //pure LED data length
+#define LEDS_SDATA_N LEDS_PREDATA+LEDS_DATA_N*4+LEDS_POSTDATA //serial data length
 
 
 //type definitions
@@ -38,12 +38,12 @@ typedef struct{
 	uint8_t red;
 	uint8_t green;
 	uint8_t blue;
-}LED_t;
+}led_t;
 
 //function prototypes
 void ledSetup(SPI_HandleTypeDef *hspi);
-void ledSet(LED_t *led);
-void ledProgress(float progress, LED_t on, LED_t off);
+void ledSet(led_t *led);
+void ledProgress(float progress, led_t on, led_t off);
 
 
 #endif /*_LEDS_H*/

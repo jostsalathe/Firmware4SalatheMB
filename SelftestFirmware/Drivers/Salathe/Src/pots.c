@@ -1,7 +1,7 @@
 /*
- * application.h
+ * pots.c
  *
- *  Created on: 15.03.2018
+ *  Created on: 14.04.2018
  *      Author: Jost Salathe <jostsalathe@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or
@@ -14,35 +14,24 @@
  *  General Public License for more details.
  */
 
-#ifndef _APPLICATION_H
-#define _APPLICATION_H
-
-//includes
-#include "FreeRTOS.h"
-#include "task.h"
-
-#include "fmc.h"
-#include "spi.h"
-#include "tim.h"
-
-#include "benchmarks.h"
-#include "testRoutines.h"
-#include "ad5592r.h"
-#include "but.h"
-#include "enc.h"
-#include "leds.h"
-#include "oled.h"
 #include "pots.h"
-#include "sdCard.h"
-#include "sdram.h"
-#include "term.h"
 
-//global variables and defines
+//variable definitions
+ADC_HandleTypeDef* hadcPots = NULL;
+uint16_t potValues[POTS_N] = {0};
 
-//type definitions
+//functions
+void potsSetup(ADC_HandleTypeDef* hadc) {
+	hadcPots = hadc;
+	HAL_ADC_Start_DMA(hadcPots, (uint32_t*) potValues, POTS_N);
+}
 
-//function prototypes
-void appInit();
-void appGui();
+uint16_t potGetUI(uint8_t potIdx) {
+	if (potIdx >= POTS_N) return 0;
+	else return potValues[potIdx];
+}
 
-#endif /* _APPLICATION_H */
+float potGetF(uint8_t potIdx) {
+	if (potIdx >= POTS_N) return 0.0;
+	else return (float) potValues[potIdx]/POTS_MAX_VAL;
+}

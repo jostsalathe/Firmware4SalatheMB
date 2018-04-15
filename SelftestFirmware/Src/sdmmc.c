@@ -113,7 +113,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef* sdHandle)
 
     /* SDMMC1 DMA Init */
     /* SDMMC1_RX Init */
-    hdma_sdmmc1_rx.Instance = DMA2_Stream3;
+    hdma_sdmmc1_rx.Instance = DMA2_Stream6;
     hdma_sdmmc1_rx.Init.Channel = DMA_CHANNEL_4;
     hdma_sdmmc1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_sdmmc1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -134,7 +134,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef* sdHandle)
     __HAL_LINKDMA(sdHandle,hdmarx,hdma_sdmmc1_rx);
 
     /* SDMMC1_TX Init */
-    hdma_sdmmc1_tx.Instance = DMA2_Stream6;
+    hdma_sdmmc1_tx.Instance = DMA2_Stream3;
     hdma_sdmmc1_tx.Init.Channel = DMA_CHANNEL_4;
     hdma_sdmmc1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_sdmmc1_tx.Init.PeriphInc = DMA_PINC_DISABLE;

@@ -69,8 +69,8 @@ int addrArrayContains(TEST_RAM_TYPE **arr, int size, TEST_RAM_TYPE *val) {
 
 int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	uint32_t err = 0, tested = 0, i = 0;
-	LED_t off = {0x0,0x0,0x0};
-	LED_t on = {0x0,0x3F,0x0};
+	led_t off = {0x0,0x0,0x0};
+	led_t on = {0x0,0x3F,0x0};
 #ifdef TEST_RAM_FULL
 	TEST_RAM_TYPE *addr;
 #else

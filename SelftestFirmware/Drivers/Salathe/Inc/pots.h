@@ -1,7 +1,7 @@
 /*
- * application.h
+ * pots.h
  *
- *  Created on: 15.03.2018
+ *  Created on: 14.04.2018
  *      Author: Jost Salathe <jostsalathe@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or
@@ -14,35 +14,21 @@
  *  General Public License for more details.
  */
 
-#ifndef _APPLICATION_H
-#define _APPLICATION_H
+#ifndef _POTS_H
+#define _POTS_H
 
-//includes
-#include "FreeRTOS.h"
-#include "task.h"
-
-#include "fmc.h"
-#include "spi.h"
-#include "tim.h"
-
-#include "benchmarks.h"
-#include "testRoutines.h"
-#include "ad5592r.h"
-#include "but.h"
-#include "enc.h"
-#include "leds.h"
-#include "oled.h"
-#include "pots.h"
-#include "sdCard.h"
-#include "sdram.h"
-#include "term.h"
+#include "stm32f7xx_hal.h"
+#include "adc.h"
 
 //global variables and defines
+#define POTS_N 8
+#define POTS_MAX_VAL 4095
 
 //type definitions
 
 //function prototypes
-void appInit();
-void appGui();
+void potsSetup(ADC_HandleTypeDef* hadc);
+uint16_t potGetUI(uint8_t potIdx);
+float potGetF(uint8_t potIdx);
 
-#endif /* _APPLICATION_H */
+#endif /*_POTS_H*/

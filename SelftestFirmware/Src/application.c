@@ -19,7 +19,7 @@
 uint8_t booting = 1;
 
 void appInit() {
-	LED_t leds[NLEDS];
+	led_t leds[LEDS_N];
 	uint32_t i = 0;
 
 	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
@@ -28,11 +28,12 @@ void appInit() {
 	encSetup(&htim4, 1);
 	ledSetup(&hspi4);
 	oledSetup(&hspi1);
+	potsSetup(&hadc1);
 	termSetup(&huart1);
 	sdramSetup(&hsdram1);
 
 	oledFillScreen(OLED_WHITE);
-	for (i = 0; i < NLEDS; ++i) {
+	for (i = 0; i < LEDS_N; ++i) {
 		leds[i].red = 0;
 		leds[i].green = 0;
 		leds[i].blue = 0;
@@ -66,9 +67,19 @@ void appInit() {
 	demoAD5592R(&hspi6);
 }
 
+char generateSpinner(uint32_t val) {
+	switch (val%4) {
+	case 0: return '|';
+	case 1: return '/';
+	case 2: return '-';
+	case 3: return '\\';
+	default: return ' ';
+	}
+}
+
 void appGui() {
 	TickType_t xLastWakeTime;
-	LED_t ledColor, ledOff, led[NLEDS];
+	led_t ledColor, ledOff, led[LEDS_N];
 	uint32_t i = 0, loopCnt = 0;
 	const uint32_t enc1Max = 96;
 
@@ -82,13 +93,35 @@ void appGui() {
 	ledOff.green = 0;
 	ledOff.blue = 0;
 
-	for (i = 0; i < NLEDS; ++i) {
+	for (i = 0; i < LEDS_N; ++i) {
 		led[i] = ledOff; //Color;
 	}
 
 	oledClear();
-	oledCurSet(0, 10);
-	oledPutString("Grumpy wizards\nmake toxic brew\nfor the evil\nQueen and Jack.", OLED_BLUE);
+	oledCurSet(34,10);
+	oledPutChar('0', OLED_BLUE);
+	oledCurSet(44,10);
+	oledPutChar('P', OLED_BLUE);
+	oledCurSet(54,10);
+	oledPutChar('1', OLED_BLUE);
+	oledCurSet(34,20);
+	oledPutChar('2', OLED_BLUE);
+	oledCurSet(44,20);
+	oledPutChar('O', OLED_BLUE);
+	oledCurSet(54,20);
+	oledPutChar('3', OLED_BLUE);
+	oledCurSet(34,30);
+	oledPutChar('4', OLED_BLUE);
+	oledCurSet(44,30);
+	oledPutChar('T', OLED_BLUE);
+	oledCurSet(54,30);
+	oledPutChar('5', OLED_BLUE);
+	oledCurSet(34,40);
+	oledPutChar('6', OLED_BLUE);
+	oledCurSet(44,40);
+	oledPutChar('I', OLED_BLUE);
+	oledCurSet(54,40);
+	oledPutChar('7', OLED_BLUE);
 
 	/* Infinite loop */
 	for (;;) {
@@ -127,12 +160,29 @@ void appGui() {
 		oledPutString(uint2Str(pos0, 5, intBuf), OLED_GREEN);
 		oledCurSet(65,0);
 		oledPutString(uint2Str(pos1, 5, intBuf), OLED_GREEN);
+		oledCurSet(34,0);
+		oledPutChar(generateSpinner(pos0), OLED_GREEN);
 		oledCurSet(44,0);
-		if (loopCnt%2 == 0) {
-			oledPutChar('_', OLED_GREEN);
-		} else {
-			oledPutChar(' ', OLED_GREEN);
-		}
+		oledPutChar(generateSpinner(loopCnt), OLED_RED|OLED_GREEN);
+		oledCurSet(54,0);
+		oledPutChar(generateSpinner(pos1), OLED_GREEN);
+
+		oledCurSet(0,10);
+		oledPutString(uint2Str(potGetUI(0), 4, intBuf), OLED_BLUE);
+		oledCurSet(71,10);
+		oledPutString(uint2Str(potGetUI(1), 4, intBuf), OLED_BLUE);
+		oledCurSet(0,20);
+		oledPutString(uint2Str(potGetUI(2), 4, intBuf), OLED_BLUE);
+		oledCurSet(71,20);
+		oledPutString(uint2Str(potGetUI(3), 4, intBuf), OLED_BLUE);
+		oledCurSet(0,30);
+		oledPutString(uint2Str(potGetUI(4), 4, intBuf), OLED_BLUE);
+		oledCurSet(71,30);
+		oledPutString(uint2Str(potGetUI(5), 4, intBuf), OLED_BLUE);
+		oledCurSet(0,40);
+		oledPutString(uint2Str(potGetUI(6), 4, intBuf), OLED_BLUE);
+		oledCurSet(71,40);
+		oledPutString(uint2Str(potGetUI(7), 4, intBuf), OLED_BLUE);
 		++loopCnt;
 	}
 }
