@@ -59,8 +59,7 @@ void appInit() {
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
 
-	oledPutString("press button to continue...", OLED_GREEN);
-	while (!(buttonFalling(BUTTONENC0)||buttonFalling(BUTTONENC1)));
+	vTaskDelay(1000);
 
 	oledClear();
 	booting = 0;
