@@ -43,11 +43,11 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200) //bit9
 
 //variables
-SDRAM_HandleTypeDef* hsdram;
+SDRAM_HandleTypeDef* sdram_handle;
 
 //functions
 void sdramSetup(SDRAM_HandleTypeDef* handle) {
-	hsdram = handle;
+	sdram_handle = handle;
 	__IO uint32_t tmpmrd =0;
 	FMC_SDRAM_CommandTypeDef Cmd;
 	FMC_SDRAM_CommandTypeDef *Command = &Cmd;
@@ -58,7 +58,7 @@ void sdramSetup(SDRAM_HandleTypeDef* handle) {
 	Command->ModeRegisterDefinition = 0;
 
 	/* Send the command */
-	HAL_SDRAM_SendCommand(hsdram, Command, SDRAM_CMD_TIMEOUT);
+	HAL_SDRAM_SendCommand(sdram_handle, Command, SDRAM_CMD_TIMEOUT);
 
 	/* Step 4: Insert 100 us minimum delay */
 	/* Inserted delay is equal to 1 ms due to systick time base unit (ms) */
@@ -71,7 +71,7 @@ void sdramSetup(SDRAM_HandleTypeDef* handle) {
 	Command->ModeRegisterDefinition = 0;
 
 	/* Send the command */
-	HAL_SDRAM_SendCommand(hsdram, Command, SDRAM_CMD_TIMEOUT);
+	HAL_SDRAM_SendCommand(sdram_handle, Command, SDRAM_CMD_TIMEOUT);
 
 	/* Step 6 : Configure a Auto-Refresh command */
 	Command->CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
@@ -80,7 +80,7 @@ void sdramSetup(SDRAM_HandleTypeDef* handle) {
 	Command->ModeRegisterDefinition = 0;
 
 	/* Send the command */
-	HAL_SDRAM_SendCommand(hsdram, Command, SDRAM_CMD_TIMEOUT);
+	HAL_SDRAM_SendCommand(sdram_handle, Command, SDRAM_CMD_TIMEOUT);
 
 	/* Step 7: Program the external memory mode register */
 	tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_1 |
@@ -95,8 +95,8 @@ void sdramSetup(SDRAM_HandleTypeDef* handle) {
 	Command->ModeRegisterDefinition = tmpmrd;
 
 	/* Send the command */
-	HAL_SDRAM_SendCommand(hsdram, Command, SDRAM_CMD_TIMEOUT);
+	HAL_SDRAM_SendCommand(sdram_handle, Command, SDRAM_CMD_TIMEOUT);
 
 	/* Step 8: Set the refresh rate counter */
-	hsdram->Instance->SDRTR |= ((uint32_t)((SDRAM_REFRESH_COUNT)<< 1));
+	sdram_handle->Instance->SDRTR |= ((uint32_t)((SDRAM_REFRESH_COUNT)<< 1));
 }

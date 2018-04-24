@@ -147,16 +147,16 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 #endif
 		}
 #ifdef TEST_RAM_FULL
-		while (HAL_SDRAM_Write_32b(hsdram, addr, dataW, TEST_RAM_CHUNK_SIZE));
-		while (HAL_SDRAM_Read_32b(hsdram, addr, dataR, TEST_RAM_CHUNK_SIZE));
+		while (sdramWrite(addr, dataW, TEST_RAM_CHUNK_SIZE));
+		while (sdramRead(addr, dataR, TEST_RAM_CHUNK_SIZE));
 #else
 		ledProgress(0.125, on, off);
 		oledProgress(0.125, OLED_GREEN);
 		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
-			HAL_SDRAM_Write_32b(hsdram, addrs[i], dataW+i, 1);
+			sdramWrite(addrs[i], dataW+i, 1);
 		}
 		for (i = 0; i < TEST_RAM_CHUNK_SIZE; ++i) {
-			HAL_SDRAM_Read_32b(hsdram, addrs[i], dataR+i, 1);
+			sdramRead(addrs[i], dataR+i, 1);
 		}
 		ledProgress(0.25, on, off);
 		oledProgress(0.25, OLED_GREEN);
