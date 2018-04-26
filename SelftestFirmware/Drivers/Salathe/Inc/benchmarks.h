@@ -18,12 +18,24 @@
 #define _BENCHMARKS_H
 
 #include "ad5592r.h"
+#include "sdram.h"
+#include "sdCard.h"
+
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_gpio.h"
 
-#define ALLDACS
-
-void ad5592rLibBenchmarkDAC(SPI_HandleTypeDef *hspi);
-void ad5592rRegBenchmarkDAC(SPI_HandleTypeDef *hspi);
+//function declarations
+// tests the maximum sample rate when configuring all pins of CHIP0 as digital output (returns sample rate in Hz)
+uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi);
+// tests the maximum sample rate when configuring all pins of CHIP0 as analog output (returns sample rate in Hz)
+uint64_t ad5592rBenchmarkDAC(SPI_HandleTypeDef *hspi);
+// test the writing transfer rate of the SDRAM (returns transfer rate in bit/s)
+uint64_t sdramBenchmarkWrite();
+// test the reading transfer rate of the SDRAM (returns transfer rate in bit/s)
+uint64_t sdramBenchmarkRead();
+// test the writing transfer rate of the SD card (returns transfer rate in bit/s)
+uint64_t sdCardBenchmarkWrite();
+// test the reading transfer rate of the SD card (returns transfer rate in bit/s)
+uint64_t sdCardBenchmarkRead();
 
 #endif /*_BENCHMARKS_H*/

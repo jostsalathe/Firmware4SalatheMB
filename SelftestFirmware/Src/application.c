@@ -52,6 +52,27 @@ void appInit() {
 	oledClear();
 	termPutString("\r--- testing peripherals ---\r");
 
+/*
+	char buf[11] = {0};
+	uint64_t result;
+
+	termPutString("\rTesting the maximum transfer rate of the SDRAM in write mode...");
+	result = sdramBenchmarkWrite();
+	termPutString(" done.\r achieved a transfer rate of ");
+	termPutString(uint2Str((uint32_t) (result/1000/1000), 4, buf));
+	termPutChar('.');
+	termPutString(uint2Str((uint32_t) (result%(1000*1000)), 6, buf));
+	termPutString(" Mbit/s (write)");
+
+	termPutString("\rTesting the maximum transfer rate of the SDRAM in read mode...");
+	result = sdramBenchmarkRead();
+	termPutString(" done.\r achieved a transfer rate of ");
+	termPutString(uint2Str((uint32_t) (result/1000/1000), 4, buf));
+	termPutChar('.');
+	termPutString(uint2Str((uint32_t) (result%(1000*1000)), 6, buf));
+	termPutString(" Mbit/s (read)\r");
+*/
+
 	testSDCARD();
 	testSDRAM(&hsdram1);
 	testAD5592R(&hspi6);

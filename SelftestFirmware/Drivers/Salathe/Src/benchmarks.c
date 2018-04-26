@@ -16,125 +16,106 @@
 
 #include "benchmarks.h"
 
+#define BENCHMARK_DURATION 8 //in seconds (maximum duration is 32s, should be a power of 2)
+#define SDRAM_BENCHMARK_BUFFER_SIZE 2048 //in words (maximum buffer size is 2048 words)
+
 //functions
-void ad5592rLibBenchmarkDAC(SPI_HandleTypeDef *hspi) {
-#ifdef ALLDACS
-	ad5592rPin_t pin;
-	ad5592rSetup(hspi, 0xF);
-	for (pin.number = 0; pin.number<32; ++pin.number) {
-		ad5592rSetPinMode(pin, ad5592rAnalogOut);
+uint64_t ad5592rBenchmark(SPI_HandleTypeDef *hspi, ad5592rPinMode_t pinMode) {
+	uint64_t n;
+	uint32_t tickCnt;
+
+	//setup only the first AD5592R and return 0 if CHIP0 could not be initialized successfully
+	if (!ad5592rSetup(hspi, AD5592R_CHIP0_ACTIVE)) return 0;
+
+	//set pin modes and values
+	for (n=0; n<8; ++n) {
+		ad5592rSetPinMode((ad5592rPin_t) (uint8_t) n, pinMode);
+		ad5592rSetPin((ad5592rPin_t) (uint8_t) n, 0x800);
 	}
 	ad5592rUpdatePinModes();
-	int i = 0, val;
-	while (1) {
-		val = ad5592rSine[i];
-		for (pin.number = 0; pin.number<32; ++pin.number) {
-			ad5592rSetPin(pin, val);
-		}
-#else
-	ad5592rPin_t pin;
-	ad5592rSetup(hspi, 0x1);
-	pin.number = 0;
-	ad5592rSetPinMode(pin, ad5592rAnalogOut);
-	ad5592rUpdatePinModes();
-	int i = 0;
-	while (1) {
-		ad5592rSetPin(pin, ad5592rSine[i]);
-#endif
-		if (++i == AD5592R_N_SINE) {
-			i = 0;
-		}
+	n = 0;
+
+	//wait for a system tick transition
+	tickCnt = HAL_GetTick()+1;
+	while (tickCnt > HAL_GetTick());
+
+	//set end of test period ([duration in s]*1000ticks/s)
+	tickCnt += 1000*BENCHMARK_DURATION;
+
+	//update the ad5592r until the period has passed and increase a counter each time
+	while (tickCnt > HAL_GetTick()) {
 		ad5592rUpdate();
+		++n;
 	}
+
+	//calculate the measured sample rate in sample/s
+	return n/BENCHMARK_DURATION;
 }
 
-void ad5592rRegBenchmarkDAC(SPI_HandleTypeDef *hspi) {
-	//SPI6 data register
-	__IO uint16_t *spiDR = (uint16_t *) &(hspi->Instance->DR);
-	//SPI6 status register
-	__IO uint32_t *spiSR = &(hspi->Instance->SR);
-	//Bit Set and Reset Registers for the four NCS lines
-	__IO uint32_t *BSRRs[4] = {
-			&(SPI6_CS_0_GPIO_Port->BSRR),
-			&(SPI6_CS_1_GPIO_Port->BSRR),
-			&(SPI6_CS_2_GPIO_Port->BSRR),
-			&(SPI6_CS_3_GPIO_Port->BSRR)};
-	//bit masks for the four NCS lines the respective BSRR
-	uint32_t csPins[4] = {
-			SPI6_CS_0_Pin,
-			SPI6_CS_1_Pin,
-			SPI6_CS_2_Pin,
-			SPI6_CS_3_Pin,
-	};
-	//data structure for controlling the AD5592R
-	ad5592rReg_t cmd;
-	//counter variable
-	uint32_t iSample = 0;
-	//command for setting DAC values
-	uint16_t dataCmd = 0x8000+ad5592rSine[iSample];
-	//index of DAC
-	uint32_t iDAC = 0;
-#ifdef ALLDACS
-	//index of AD5592R
-	uint32_t iChip = 0;
-#endif
-	//next bit reset register
-	__IO uint32_t *csReg = BSRRs[0];
-	//next value for bit reset register (select)
-	uint32_t csVal = csPins[0]<<16;
-	//next bit set register
-	__IO uint32_t *ncsReg;
-	//next value for bit set register (deselect)
-	uint32_t ncsVal;
-
-	ad5592rSetup(hspi, 0xF);
-
-	//setup command to enable all DACs
-	cmd.cmd.DnC = AD5592R_SEND_CMD;
-	cmd.cmd.addr = AD5592R_REG_DAC_PINS;
-	cmd.cmd.data = 0xFF;
-	ad5592rTxRxReg(0,cmd);
-	ad5592rTxRxReg(1,cmd);
-	ad5592rTxRxReg(2,cmd);
-	ad5592rTxRxReg(3,cmd);
-
-	//wait for the SPI bus to be ready
-	while (!__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE));
-	while (1) {
-		//activate chip select
-		*csReg = csVal;
-		//write data to the SPI bus
-		*spiDR = dataCmd;
-		//load next chip deselect parameters
-		ncsReg = csReg;
-		ncsVal = csVal>>16;
-#ifdef ALLDACS
-		//increment the DAC index and reset if necessary (8 DACs)
-		++iDAC;
-		if (iDAC==8) {
-			iDAC = 0;
-			//increment the chip index and reset if necessary (4 chips)
-			++iChip;
-			if (iChip==4) {
-				iChip = 0;
-#endif
-				//increment the counter and reset if necessary (1000 values in lookup table)
-				++iSample;
-				if (iSample==AD5592R_N_SINE) {
-					iSample = 0;
-				}
-#ifdef ALLDACS
-			}
-			//load next chip select parameters
-			csReg = BSRRs[iChip];
-			csVal = csPins[iChip]<<16;
-		}
-#endif
-		//prepare next data command
-		dataCmd = ((0x8|iDAC)<<12) | ad5592rSine[iSample];
-		//wait for SPI transmission to end
-		while ((*spiSR)&SPI_FLAG_BSY);
-		//deactivate chip select
-		*ncsReg = ncsVal;
-	}
+uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi) {
+	return ad5592rBenchmark(hspi, ad5592rDigitalOut);
 }
+
+uint64_t ad5592rBenchmarkDAC(SPI_HandleTypeDef *hspi) {
+	return ad5592rBenchmark(hspi, ad5592rAnalogOut);
+}
+
+uint64_t sdramBenchmarkWrite() {
+	uint64_t n = 0;
+	uint32_t tickCnt;
+	uint32_t buf[SDRAM_BENCHMARK_BUFFER_SIZE];
+
+	//wait for a system tick transition
+	tickCnt = HAL_GetTick()+1;
+	while (tickCnt > HAL_GetTick());
+
+	//set end of test period ([duration in s]*1000ticks/s)
+	tickCnt += 1000*BENCHMARK_DURATION;
+
+	//write to buf until the period has passed and increase a counter each time
+	while (tickCnt > HAL_GetTick()) {
+		sdramWrite((uint32_t *) SDRAM_ADDR, buf, SDRAM_BENCHMARK_BUFFER_SIZE);
+		++n;
+	}
+
+	//calculate the measured transfer rate in bit/s
+	return n*SDRAM_BENCHMARK_BUFFER_SIZE*(32/BENCHMARK_DURATION);
+}
+
+uint64_t sdramBenchmarkRead() {
+	uint64_t n = 0;
+	uint32_t tickCnt;
+	uint32_t buf[SDRAM_BENCHMARK_BUFFER_SIZE];
+
+	//wait for a system tick transition
+	tickCnt = HAL_GetTick()+1;
+	while (tickCnt > HAL_GetTick());
+
+	//set end of test period ([duration in s]*1000ticks/s)
+	tickCnt += 1000*BENCHMARK_DURATION;
+
+	//read into buf until the period has passed and increase a counter each time
+	while (tickCnt > HAL_GetTick()) {
+		sdramRead((uint32_t *) SDRAM_ADDR, buf, SDRAM_BENCHMARK_BUFFER_SIZE);
+		++n;
+	}
+
+	//calculate the measured transfer rate in bit/s
+	return n*SDRAM_BENCHMARK_BUFFER_SIZE*(32/BENCHMARK_DURATION);
+}
+
+uint64_t sdCardBenchmarkWrite() {
+	//check if an SD card is mounted - if not, try to mount it
+	if (!SD_Rdy) //if the setup fails, return undone
+		if (sdCardSetup()) return 0;
+
+	return 0;
+}
+
+uint64_t sdCardBenchmarkRead() {
+	//check if an SD card is mounted - if not, return
+	if (!SD_Rdy) return 0;
+
+	return 0;
+}
+
