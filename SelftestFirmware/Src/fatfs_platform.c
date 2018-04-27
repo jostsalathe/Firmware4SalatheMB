@@ -56,7 +56,7 @@ uint8_t	BSP_PlatformIsDetected(void) {
   /* USER CODE BEGIN 1 */
   /* user code can be inserted here */
   // invert because the switch on the sd-slot is wired to the wrong potential
-  status = status?0x00:0x01;
+  status = !status;
   /* USER CODE END 1 */ 
   return status;
 }  
