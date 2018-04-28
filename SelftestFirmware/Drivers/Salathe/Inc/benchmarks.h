@@ -20,9 +20,11 @@
 #include "ad5592r.h"
 #include "sdram.h"
 #include "sdCard.h"
+#include "sd_diskio.h"
 
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_gpio.h"
+#include "rng.h"
 
 //function declarations
 // tests the maximum sample rate when configuring all pins of CHIP0 as digital output (returns sample rate in Hz)
@@ -34,8 +36,10 @@ uint64_t sdramBenchmarkWrite();
 // test the reading transfer rate of the SDRAM (returns transfer rate in bit/s)
 uint64_t sdramBenchmarkRead();
 // test the writing transfer rate of the SD card (returns transfer rate in bit/s)
-uint64_t sdCardBenchmarkWrite();
+uint64_t sdCardBenchmarkWriteFatFS(); //using FatFS layer
+uint64_t sdCardBenchmarkWriteRaw(); //using SD card driver without file system
 // test the reading transfer rate of the SD card (returns transfer rate in bit/s)
-uint64_t sdCardBenchmarkRead();
+uint64_t sdCardBenchmarkReadFatFS(); //using FatFS layer
+uint64_t sdCardBenchmarkReadRaw(); //using SD card driver without file system
 
 #endif /*_BENCHMARKS_H*/
