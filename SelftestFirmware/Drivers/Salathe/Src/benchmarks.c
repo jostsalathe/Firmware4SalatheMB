@@ -78,7 +78,7 @@ uint64_t sdramBenchmarkWrite() {
 
 	//write to buf until the period has passed and increase a counter each time
 	while (tickCnt > HAL_GetTick()) {
-		sdramWrite((uint32_t *) SDRAM_ADDR, buf, BENCHMARK_SDRAM_BUFFER_SIZE);
+		sdramWrite(SDRAM_ADDR, buf, BENCHMARK_SDRAM_BUFFER_SIZE);
 		++n;
 	}
 
@@ -101,7 +101,7 @@ uint64_t sdramBenchmarkRead() {
 
 	//read into buf until the period has passed and increase a counter each time
 	while (tickCnt > HAL_GetTick()) {
-		sdramRead((uint32_t *) SDRAM_ADDR, buf, BENCHMARK_SDRAM_BUFFER_SIZE);
+		sdramRead(SDRAM_ADDR, buf, BENCHMARK_SDRAM_BUFFER_SIZE);
 		++n;
 	}
 

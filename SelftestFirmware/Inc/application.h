@@ -27,6 +27,7 @@
 
 #include "benchmarks.h"
 #include "testRoutines.h"
+#include "ad1938.h"
 #include "ad5592r.h"
 #include "but.h"
 #include "enc.h"
@@ -43,6 +44,7 @@
 
 //function prototypes
 void appInit();
+void appAudio();
 void appGui();
 
 #endif /* _APPLICATION_H */

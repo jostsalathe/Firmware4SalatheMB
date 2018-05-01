@@ -68,13 +68,13 @@ void MX_SAI1_Init(void)
   hsai_BlockA1.Instance = SAI1_Block_A;
   hsai_BlockA1.Init.AudioMode = SAI_MODESLAVE_RX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 4) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -82,13 +82,13 @@ void MX_SAI1_Init(void)
   hsai_BlockB1.Instance = SAI1_Block_B;
   hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
   hsai_BlockB1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_ENABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_FULL;
   hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 8) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -138,7 +138,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_a.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_sai1_a.Init.Mode = DMA_NORMAL;
+    hdma_sai1_a.Init.Mode = DMA_CIRCULAR;
     hdma_sai1_a.Init.Priority = DMA_PRIORITY_VERY_HIGH;
     hdma_sai1_a.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_sai1_a) != HAL_OK)
@@ -188,7 +188,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_b.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_b.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_sai1_b.Init.Mode = DMA_NORMAL;
+    hdma_sai1_b.Init.Mode = DMA_CIRCULAR;
     hdma_sai1_b.Init.Priority = DMA_PRIORITY_VERY_HIGH;
     hdma_sai1_b.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_sai1_b) != HAL_OK)

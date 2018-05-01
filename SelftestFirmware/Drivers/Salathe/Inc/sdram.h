@@ -22,7 +22,7 @@
 
 //global variables and defines
 extern SDRAM_HandleTypeDef* sdram_handle;
-#define SDRAM_ADDR        ((uint32_t)0xC0000000)
+#define SDRAM_ADDR        ((uint32_t*)0xC0000000)
 #define SDRAM_SIZE        ((uint32_t)0x00800000)
 #define sdramRead(ram_addr, buf_addr, buf_size) HAL_SDRAM_Read_32b(sdram_handle, ram_addr, buf_addr, buf_size)
 #define sdramWrite(ram_addr, buf_addr, buf_size) HAL_SDRAM_Write_32b(sdram_handle, ram_addr, buf_addr, buf_size)

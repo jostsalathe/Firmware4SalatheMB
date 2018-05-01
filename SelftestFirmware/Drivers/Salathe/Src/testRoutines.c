@@ -116,9 +116,9 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 	ledProgress(0.0, on, off);
 	oledProgress(0.0, OLED_GREEN);
 #ifdef TEST_RAM_FULL
-	for (addr = (TEST_RAM_TYPE *) SDRAM_ADDR; addr+TEST_RAM_CHUNK_SIZE <= (TEST_RAM_TYPE *) (TEST_RAM_END+SDRAM_ADDR); addr += TEST_RAM_CHUNK_SIZE) {
-		ledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_RAM_END), on, off);
-		oledProgress((float) ((uint32_t)addr-SDRAM_ADDR)/(TEST_RAM_END), OLED_GREEN);
+	for (addr = SDRAM_ADDR; addr+TEST_RAM_CHUNK_SIZE <= (TEST_RAM_TYPE *) (TEST_RAM_END+(uint32_t)SDRAM_ADDR); addr += TEST_RAM_CHUNK_SIZE) {
+		ledProgress((float) ((uint32_t)addr-(uint32_t)SDRAM_ADDR)/(TEST_RAM_END), on, off);
+		oledProgress((float) ((uint32_t)addr-(uint32_t)SDRAM_ADDR)/(TEST_RAM_END), OLED_GREEN);
 #ifdef TEST_RAM_LOG_ALL
 		termPutString("offset 0x");
 		termPutString(hex2Str((uint32_t) addr, 8, hexBuf));
@@ -133,7 +133,7 @@ int testSDRAM(SDRAM_HandleTypeDef *hsdram) {
 				randNum *= SDRAM_SIZE-1;
 				randNum /= 4294967295;
 				randNum &= ~0b11;
-				randNum += SDRAM_ADDR;
+				randNum += (uint32_t) SDRAM_ADDR;
 			} while(addrArrayContains(addrs, i+1, (TEST_RAM_TYPE *) (uint32_t) randNum));
 			addrs[i] = (TEST_RAM_TYPE *) (uint32_t) randNum;
 #endif

@@ -17,6 +17,7 @@
 #include "application.h"
 
 uint8_t booting = 1;
+ad1938_HandleTypeDef ad1938Handle;
 
 void appInit() {
 	led_t leds[LEDS_N];
@@ -31,7 +32,7 @@ void appInit() {
 	potsSetup(&hadc1);
 	termSetup(&huart1);
 	sdramSetup(&hsdram1);
-//	sdCardSetup();
+	sdCardSetup();
 
 	oledFillScreen(OLED_WHITE);
 	for (i = 0; i < LEDS_N; ++i) {
@@ -50,22 +51,78 @@ void appInit() {
 	termPutString("platform for developing digital\r");
 	termPutString("     synthesizer modules\r");
 
-	oledClear();
+	vTaskDelay(1000);
+
+/*	oledClear();
+
 	termPutString("\r--- testing peripherals ---\r");
-
-
+	testAD5592R(&hspi6);
 	testSDCARD();
 	testSDRAM(&hsdram1);
-	testAD5592R(&hspi6);
 
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
 
 	vTaskDelay(1000);
-
+*/
 	oledClear();
 	booting = 0;
-	demoAD5592R(&hspi6);
+	appAudio();
+}
+
+void appAudio() {
+	int i, iSamp = 0;
+	ad1938SampleType *freshInBuf;
+	uint32_t freshInBufSize;
+	ad1938SampleType *freshOutBuf;
+	uint32_t freshOutBufSize;
+
+	//prepare the ad1938 handle structure
+	ad1938Handle.csIndex=0;
+	ad1938Handle.hspi = &hspi1;
+	ad1938Handle.hsaiIn = &hsai_BlockA1;
+	ad1938Handle.hsaiOut = &hsai_BlockB1;
+	ad1938Handle.inBuf = (ad1938SampleType*) SDRAM_ADDR;
+	ad1938Handle.inBufSize = 480*4;
+	ad1938Handle.outBuf = (ad1938SampleType*) SDRAM_ADDR+480*4;
+	ad1938Handle.outBufSize = 480*8;
+
+	//initialize ad1938 and related peripherals
+	ad1938Setup(&ad1938Handle);
+
+	//initialize the transmission buffer with the first output interval. In this case a sine wave for demo purpose
+	for (i=0; i<480; ++i) {
+		int j;
+		for (j=0; j<8; ++j) {
+			(ad1938Handle.outBuf)[i*8+j] = (((ad1938SampleType)(ad5592rSine[iSamp*4]))-0x800)<<20;
+		}
+		if(++iSamp>=250) iSamp=0;
+	}
+
+	//start the DMA transfers for audio streaming
+	ad1938Start();
+
+	//enter the sample calculation loop
+	while(1) {
+		//wait for new buffers to process
+		ad1938WaitOnBuffers(&freshInBuf, &freshInBufSize, &freshOutBuf, &freshOutBufSize);
+		for (i=0; i<freshOutBufSize/8; ++i) {
+			int j;
+			ad1938SampleType sample = (((ad1938SampleType)(ad5592rSine[iSamp*4]))-0x800)<<8;
+			for (j=0; j<4; ++j) {
+				freshOutBuf[i*8+j] = freshInBuf[i*4+j]/POTS_MAX_VAL*potGetSmoothUI(j);
+			}
+			for (j=4; j<8; ++j) {
+				freshOutBuf[i*8+j] = (ad1938SampleType) sample*potGetSmoothUI(j);
+			}
+			if(++iSamp>=250) iSamp=0;
+		}
+		//calculate next set of samples
+		//but do nothing in this demo - sine wave stays the same
+	}
+
+	//stop the DMA transfers to quit audio streaming
+	ad1938Stop();
 }
 
 char generateSpinner(uint32_t val) {
@@ -169,21 +226,22 @@ void appGui() {
 		oledPutChar(generateSpinner(pos1), OLED_GREEN);
 
 		oledCurSet(0,10);
-		oledPutString(uint2Str(potGetUI(0), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(0), 4, intBuf), OLED_BLUE);
 		oledCurSet(71,10);
-		oledPutString(uint2Str(potGetUI(1), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(1), 4, intBuf), OLED_BLUE);
 		oledCurSet(0,20);
-		oledPutString(uint2Str(potGetUI(2), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(2), 4, intBuf), OLED_BLUE);
 		oledCurSet(71,20);
-		oledPutString(uint2Str(potGetUI(3), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(3), 4, intBuf), OLED_BLUE);
 		oledCurSet(0,30);
-		oledPutString(uint2Str(potGetUI(4), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(4), 4, intBuf), OLED_BLUE);
 		oledCurSet(71,30);
-		oledPutString(uint2Str(potGetUI(5), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(5), 4, intBuf), OLED_BLUE);
 		oledCurSet(0,40);
-		oledPutString(uint2Str(potGetUI(6), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(6), 4, intBuf), OLED_BLUE);
 		oledCurSet(71,40);
-		oledPutString(uint2Str(potGetUI(7), 4, intBuf), OLED_BLUE);
+		oledPutString(uint2Str(potGetSmoothUI(7), 4, intBuf), OLED_BLUE);
+
 		++loopCnt;
 	}
 }
