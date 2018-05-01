@@ -71,7 +71,8 @@ void appInit() {
 }
 
 void appAudio() {
-	int i, iSamp = 0;
+	int i, bufSize = 480;
+	int64_t iSamp = 0;
 	ad1938SampleType *freshInBuf;
 	uint32_t freshInBufSize;
 	ad1938SampleType *freshOutBuf;
@@ -83,20 +84,20 @@ void appAudio() {
 	ad1938Handle.hsaiIn = &hsai_BlockA1;
 	ad1938Handle.hsaiOut = &hsai_BlockB1;
 	ad1938Handle.inBuf = (ad1938SampleType*) SDRAM_ADDR;
-	ad1938Handle.inBufSize = 480*4;
-	ad1938Handle.outBuf = (ad1938SampleType*) SDRAM_ADDR+480*4;
-	ad1938Handle.outBufSize = 480*8;
+	ad1938Handle.inBufSize = bufSize*4;
+	ad1938Handle.outBuf = (ad1938SampleType*) SDRAM_ADDR+bufSize*4;
+	ad1938Handle.outBufSize = bufSize*8;
 
 	//initialize ad1938 and related peripherals
 	ad1938Setup(&ad1938Handle);
 
 	//initialize the transmission buffer with the first output interval. In this case a sine wave for demo purpose
-	for (i=0; i<480; ++i) {
+	for (i=0; i<bufSize; ++i) {
 		int j;
 		for (j=0; j<8; ++j) {
-			(ad1938Handle.outBuf)[i*8+j] = (((ad1938SampleType)(ad5592rSine[iSamp*4]))-0x800)<<20;
+			(ad1938Handle.outBuf)[i*8+j] = (ad1938SampleType) iSamp;
 		}
-		if(++iSamp>=250) iSamp=0;
+		if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
 	}
 
 	//start the DMA transfers for audio streaming
@@ -108,14 +109,14 @@ void appAudio() {
 		ad1938WaitOnBuffers(&freshInBuf, &freshInBufSize, &freshOutBuf, &freshOutBufSize);
 		for (i=0; i<freshOutBufSize/8; ++i) {
 			int j;
-			ad1938SampleType sample = (((ad1938SampleType)(ad5592rSine[iSamp*4]))-0x800)<<8;
+			ad1938SampleType sample = (ad1938SampleType) iSamp;
 			for (j=0; j<4; ++j) {
 				freshOutBuf[i*8+j] = freshInBuf[i*4+j]/POTS_MAX_VAL*potGetSmoothUI(j);
 			}
 			for (j=4; j<8; ++j) {
-				freshOutBuf[i*8+j] = (ad1938SampleType) sample*potGetSmoothUI(j);
+				freshOutBuf[i*8+j] = (ad1938SampleType) sample/POTS_MAX_VAL*potGetSmoothUI(j);
 			}
-			if(++iSamp>=250) iSamp=0;
+			if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
 		}
 		//calculate next set of samples
 		//but do nothing in this demo - sine wave stays the same
