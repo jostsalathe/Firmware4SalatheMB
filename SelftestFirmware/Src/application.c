@@ -53,7 +53,7 @@ void appInit() {
 
 	vTaskDelay(1000);
 
-/*	oledClear();
+	oledClear();
 
 	termPutString("\r--- testing peripherals ---\r");
 	testAD5592R(&hspi6);
@@ -64,7 +64,7 @@ void appInit() {
 	termPutString("\r--- peripherals check done ---\r");
 
 	vTaskDelay(1000);
-*/
+
 	oledClear();
 	booting = 0;
 	appAudio();
