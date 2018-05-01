@@ -20,6 +20,12 @@
 ADC_HandleTypeDef* hadcPots = NULL;
 uint16_t potValues[POTS_N] = {0};
 
+#ifdef POTS_SMOOTH_N
+uint16_t potValArray[8][POTS_SMOOTH_N] = {0};
+int32_t potSmoothed[8] = {0};
+uint32_t potValInd = 0;
+#endif /*POTS_SMOOTH_N*/
+
 //functions
 void potsSetup(ADC_HandleTypeDef* hadc) {
 	hadcPots = hadc;
@@ -35,3 +41,28 @@ float potGetF(uint8_t potIdx) {
 	if (potIdx >= POTS_N) return 0.0;
 	else return (float) potValues[potIdx]/POTS_MAX_VAL;
 }
+
+#ifdef POTS_SMOOTH_N
+uint16_t potGetSmoothUI(uint8_t potIdx) {
+	if (potIdx >= POTS_N) return 0;
+	else return (uint16_t) (potSmoothed[potIdx]/POTS_SMOOTH_N);
+}
+
+float potGetSmoothF(uint8_t potIdx) {
+	if (potIdx >= POTS_N) return 0.0;
+	else return (float) potSmoothed[potIdx]/POTS_MAX_VAL/POTS_SMOOTH_N;
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+	if (hadc == hadcPots) {
+		uint8_t iPot;
+		for (iPot=0; iPot<8; ++iPot) {
+			potValArray[iPot][potValInd%POTS_SMOOTH_N] = potValues[iPot];
+			potSmoothed[iPot] = potSmoothed[iPot]
+								- potValArray[iPot][(potValInd+1)%POTS_SMOOTH_N]
+								+ potValArray[iPot][potValInd%POTS_SMOOTH_N];
+		}
+		++potValInd;
+	}
+}
+#endif /*POTS_SMOOTH_N*/

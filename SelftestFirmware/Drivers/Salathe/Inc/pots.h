@@ -23,6 +23,8 @@
 //global variables and defines
 #define POTS_N 8
 #define POTS_MAX_VAL 4095
+#define POTS_SMOOTH_N 256 //256 for 80.61ms round trip (choose power of 2!)
+
 
 //type definitions
 
@@ -30,5 +32,9 @@
 void potsSetup(ADC_HandleTypeDef* hadc);
 uint16_t potGetUI(uint8_t potIdx);
 float potGetF(uint8_t potIdx);
+#ifdef POTS_SMOOTH_N
+uint16_t potGetSmoothUI(uint8_t potIdx);
+float potGetSmoothF(uint8_t potIdx);
+#endif /*POTS_SMOOTH_N*/
 
 #endif /*_POTS_H*/
