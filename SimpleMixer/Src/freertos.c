@@ -116,7 +116,7 @@ void MX_FREERTOS_Init(void) {
 void audioTask(void const * argument)
 {
 
-	/* USER CODE BEGIN audioTask */
+  /* USER CODE BEGIN audioTask */
 	appInit();
 	appAudio();
 	/* Infinite loop */
@@ -124,20 +124,20 @@ void audioTask(void const * argument)
 	{
 		osDelay(1);
 	}
-	/* USER CODE END audioTask */
+  /* USER CODE END audioTask */
 }
 
 /* guiTask function */
 void guiTask(void const * argument)
 {
-	/* USER CODE BEGIN guiTask */
+  /* USER CODE BEGIN guiTask */
 	appGui();
 	/* Infinite loop */
 	for(;;)
 	{
 		osDelay(1);
 	}
-	/* USER CODE END guiTask */
+  /* USER CODE END guiTask */
 }
 
 /* USER CODE BEGIN Application */

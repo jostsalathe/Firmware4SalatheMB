@@ -27,9 +27,7 @@ void ledSetup(SPI_HandleTypeDef *hspi){
 	uint8_t i;
 	hspiLED = hspi;
 	for(i=0; i<LEDS_SDATA_N; ++i) LEDsData[i] = 0;
-	taskENTER_CRITICAL();
-	HAL_SPI_Transmit(hspiLED, LEDsData, LEDS_SDATA_N, 100);
-	taskEXIT_CRITICAL();
+	HAL_SPI_Transmit_DMA(hspiLED, LEDsData, LEDS_SDATA_N);
 }
 
 void ledSet(led_t *led){
@@ -49,9 +47,7 @@ void ledSet(led_t *led){
 		}
 	}
 	// transmission takes roughly 1/4 of a millisecond (266.24us of pure data)
-	taskENTER_CRITICAL();
-	HAL_SPI_Transmit(hspiLED, LEDsData, LEDS_SDATA_N, 100);
-	taskEXIT_CRITICAL();
+	HAL_SPI_Transmit_DMA(hspiLED, LEDsData, LEDS_SDATA_N);
 }
 
 void ledProgress(float progress, led_t on, led_t off){
