@@ -65,6 +65,7 @@ void appInit() {
 void appAudio() {
 	int iSamp;
 	ad5592rPin_t pin;
+	char convBuf[20] = {0};
 
 	double rms[8] = {0.0};
 	led_t leds[8];
@@ -103,15 +104,17 @@ void appAudio() {
 
 	//start the DMA transfers for audio streaming
 	ad1938Start();
+	HAL_TIM_Base_Start(&htim2);
 
 	//enter the sample calculation loop
 	while(1) {
 		uint32_t clip[8] = {0};
 		//wait for new buffers to process
 		ad1938WaitOnBuffers(&freshInBuf, &freshInBufSize, &freshOutBuf, &freshOutBufSize);
+		htim2.Instance->CNT = 0;
 
 		//update control voltages
-		ad5592rUpdate();
+		ad5592rUpdate(); //1.2ms
 		pin.number = 0;
 
 		//handle every sample
@@ -131,11 +134,14 @@ void appAudio() {
 				for (iIn = 0; iIn < 4; ++iIn) {
 					pin.chip = iIn;
 					//add input attenuated by control voltage
-					sampleSum += inSample[iIn]*ad5592rGetPin(pin)/2000;//4095;
+					sampleSum += inSample[iIn]*ad5592rGetPin(pin); //13.3ms @2chOut*4chIn*2400sample
+//					sampleSum += inSample[iIn];
 				}
 				//attenuate output with fader
-				sampleSum *= potGetSmoothF(iOut);
-				if (sampleSum<INT32_MIN) {
+				sampleSum /= (4095*4095);
+				sampleSum *= potGetSmoothUI(iOut); //3.8ms @2ch*2400sample
+				//check for clipping
+				if (sampleSum<INT32_MIN) { //1.5ms @2ch*2400sample
 					sampleSum = INT32_MIN;
 					++clip[iOut];
 				} else if (INT32_MAX<sampleSum) {
@@ -145,23 +151,24 @@ void appAudio() {
 				//prepare output sample
 				freshOutBuf[iSamp * 8 + iOut] = sampleSum;
 				//add squared output sample to rms accumulator of output iOut
-//				rms[iOut] += (double) sampleSum*sampleSum;
-				//check for clipping
+				rms[iOut] += (double) sampleSum*sampleSum; //0.9ms @2ch*2400sample
 			}
 		}
 
-		for (iSamp=0; iSamp<8; ++iSamp) {
+		for (iSamp=0; iSamp<8; ++iSamp) { //0.4ms
 			//calculate rms
-//			rms[iSamp] = rms[iSamp]/(freshOutBufSize/8);
-//			rms[iSamp] = sqrt(rms[iSamp]);
+			rms[iSamp] = rms[iSamp]/(freshOutBufSize/8);
+			rms[iSamp] = sqrt(rms[iSamp]);
 			//scale rms to 0...1
-//			rms[iSamp] = rms[iSamp]/INT32_MAX;
+			rms[iSamp] = rms[iSamp]/INT32_MAX;
 			//set LED value
 			leds[iSamp].green = rms[iSamp]*255;
 			leds[iSamp].red = (clip[iSamp])?255:0;
 			leds[iSamp].blue = 0;
 		}
 		ledSet(leds);
+		termPutString(uint2Str(htim2.Instance->CNT, 8, convBuf));
+		termPutChar('\n');
 	}
 
 	//stop the DMA transfers to quit audio streaming
@@ -183,10 +190,10 @@ void appGui() {
 	//update GUI forever
 	xLastWakeTime = xTaskGetTickCount();
 	while(1) {
-		vTaskDelayUntil(&xLastWakeTime, 100); //every 100ms
-		oledPutChar('\n', OLED_BLUE);
+		vTaskDelayUntil(&xLastWakeTime, 1000); //every 100ms
+		oledCurSet(0,0);
 		oledPutString(uint2Str(ad5592rGetPin((ad5592rPin_t)(uint8_t)0), 4, convBuf),OLED_BLUE);
-		oledPutChar(' ', OLED_BLUE);
+		oledPutString("  ", OLED_BLUE);
 		oledPutString(uint2Str(ad5592rGetPin((ad5592rPin_t)(uint8_t)1), 4, convBuf),OLED_BLUE);
 	}
 }

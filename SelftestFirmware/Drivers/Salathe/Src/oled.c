@@ -102,12 +102,12 @@ void oledPushPixel(uint16_t color){
 
 void oledPutChar(char c, uint16_t color){
 	c &= 0x7F;
-	if(c=='\r'){
+	if (c=='\r') {
 		oledCurX = 0;
-	}else if(oledCurX+OLED_CHAR_WIDTH+OLED_HSPACE>OLED_WIDTH || c=='\n'){		//reached end of line
+	} else if (oledCurX+OLED_CHAR_WIDTH+OLED_HSPACE>OLED_WIDTH || c=='\n') {		//reached end of line
 		oledCurY += OLED_CHAR_HEIGHT+OLED_VSPACE;
 		oledCurX = 0;
-		if(oledCurY+OLED_CHAR_HEIGHT+OLED_VSPACE>OLED_HEIGHT){		//reached bottom of display
+		if (oledCurY+OLED_CHAR_HEIGHT+OLED_VSPACE>OLED_HEIGHT) {		//reached bottom of display
 			uint8_t shiftAmount = oledCurY+OLED_CHAR_HEIGHT+OLED_VSPACE-OLED_HEIGHT;
 			oledCopyWindow(0, shiftAmount, OLED_WIDTH, OLED_HEIGHT-shiftAmount, 0, 0);
 			oledCurY -= shiftAmount;
@@ -115,10 +115,10 @@ void oledPutChar(char c, uint16_t color){
 		}
 	}
 
-	if(c==' '){
-		oledFillRectangel(oledCurX, oledCurY, oledCurX+OLED_CHAR_WIDTH-1+OLED_HSPACE, oledCurY+OLED_CHAR_HEIGHT-1+OLED_VSPACE, 0);
+	if (c==' ') {
+		oledClearWindow(oledCurX, oledCurY, OLED_CHAR_WIDTH+OLED_HSPACE, OLED_CHAR_HEIGHT+OLED_VSPACE);
 		oledCurX += OLED_CHAR_WIDTH+OLED_HSPACE;
-	}else if(c!='\n' && c!='\r'){
+	} else if (c!='\n' && c!='\r') {
 		oledClearWindow(oledCurX+OLED_CHAR_WIDTH, oledCurY, OLED_HSPACE, OLED_CHAR_HEIGHT);
 		oledClearWindow(oledCurX, oledCurY+OLED_CHAR_HEIGHT, OLED_CHAR_WIDTH+OLED_HSPACE, OLED_VSPACE);
 		oledSetWindow(oledCurX, oledCurY, OLED_CHAR_WIDTH, OLED_CHAR_HEIGHT);
@@ -126,8 +126,8 @@ void oledPutChar(char c, uint16_t color){
 		uint8_t row=0, col=0;
 		uint8_t rowMask = 0x80;
 		uint16_t charMatrix[(OLED_CHAR_HEIGHT)*(OLED_CHAR_WIDTH)], i=0;
-		for(row=0; row<OLED_CHAR_HEIGHT; ++row){
-			for(col=0; col<OLED_CHAR_WIDTH; ++col){
+		for (row=0; row<OLED_CHAR_HEIGHT; ++row) {
+			for (col=0; col<OLED_CHAR_WIDTH; ++col) {
 				charMatrix[i] = (charCol[col]&rowMask)?color:0;
 				++i;
 			}
