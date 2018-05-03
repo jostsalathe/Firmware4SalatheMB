@@ -21,6 +21,7 @@ TaskHandle_t appGuiHandle = 0;
 TaskHandle_t appAudioHandle = 0;
 
 //function implementations
+
 void appInit() {
 	led_t leds[LEDS_N];
 	uint32_t i = 0;
@@ -37,7 +38,6 @@ void appInit() {
 	oledSetup(&hspi1);
 	oledFillScreen(OLED_WHITE);
 
-	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
 	buttonSetup();
 	encSetup(&htim3, 0);
 	encSetup(&htim4, 1);
@@ -53,17 +53,21 @@ void appInit() {
 	termPutString("      synthesizer modules\r\r");
 	termPutString("          SIMPLE MIXER    \r\r");
 
-	vTaskDelay(100);
+	vTaskDelay(1000);
 	oledClear();
 
 	//wake GUI task
 	if(!appGuiHandle) vTaskDelay(1000);
-	if(appGuiHandle) xTaskNotifyGive(appAudioHandle);
+	if(appGuiHandle) xTaskNotifyGive(appGuiHandle);
 	else termPutString("ERROR: appInit can't see appGui and therefore won't wake it up!\r");
 }
 
 void appAudio() {
 	int iSamp;
+	ad5592rPin_t pin;
+
+	double rms[8] = {0.0};
+	led_t leds[8];
 
 	ad1938SampleType *freshInBuf;
 	uint32_t freshInBufSize;
@@ -85,6 +89,12 @@ void appAudio() {
 
 	//initialize ad1938 and related peripherals
 	ad1938Setup(&ad1938Handle);
+	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
+	for (pin.number=0; pin.number<32; ++pin.number) {
+		ad5592rSetPinMode(pin, ad5592rAnalogIn);
+	}
+	ad5592rUpdatePinModes();
+	ad5592rUpdate();
 
 	//initialize the transmission buffer with the first output interval
 	for (iSamp=0; iSamp<AUDIO_BUF_SIZE*8; ++iSamp) {
@@ -96,11 +106,13 @@ void appAudio() {
 
 	//enter the sample calculation loop
 	while(1) {
+		uint32_t clip[8] = {0};
 		//wait for new buffers to process
 		ad1938WaitOnBuffers(&freshInBuf, &freshInBufSize, &freshOutBuf, &freshOutBufSize);
 
 		//update control voltages
 		ad5592rUpdate();
+		pin.number = 0;
 
 		//handle every sample
 		for (iSamp=0; iSamp<freshOutBufSize/8; ++iSamp) {
@@ -113,16 +125,43 @@ void appAudio() {
 			}
 
 			//calculate output samples
-			for (iOut = 0; iOut < 8; ++iOut) {
-				int64_t outSample = 0;
+			for (iOut = 0; iOut < 4; ++iOut) {
+				int64_t sampleSum = 0;
+				pin.pin = iOut;
 				for (iIn = 0; iIn < 4; ++iIn) {
-					outSample += inSample[iIn]*ad5592rGetPin();
+					pin.chip = iIn;
+					//add input attenuated by control voltage
+					sampleSum += inSample[iIn]*ad5592rGetPin(pin)/2000;//4095;
 				}
-				freshOutBuf[iSamp * 8 + iOut] = outSample / 2;
+				//attenuate output with fader
+				sampleSum *= potGetSmoothF(iOut);
+				if (sampleSum<INT32_MIN) {
+					sampleSum = INT32_MIN;
+					++clip[iOut];
+				} else if (INT32_MAX<sampleSum) {
+					sampleSum = INT32_MAX;
+					++clip[iOut];
+				}
+				//prepare output sample
+				freshOutBuf[iSamp * 8 + iOut] = sampleSum;
+				//add squared output sample to rms accumulator of output iOut
+//				rms[iOut] += (double) sampleSum*sampleSum;
+				//check for clipping
 			}
 		}
-		//calculate next set of samples
-		//but do nothing in this demo - sine wave stays the same
+
+		for (iSamp=0; iSamp<8; ++iSamp) {
+			//calculate rms
+//			rms[iSamp] = rms[iSamp]/(freshOutBufSize/8);
+//			rms[iSamp] = sqrt(rms[iSamp]);
+			//scale rms to 0...1
+//			rms[iSamp] = rms[iSamp]/INT32_MAX;
+			//set LED value
+			leds[iSamp].green = rms[iSamp]*255;
+			leds[iSamp].red = (clip[iSamp])?255:0;
+			leds[iSamp].blue = 0;
+		}
+		ledSet(leds);
 	}
 
 	//stop the DMA transfers to quit audio streaming
@@ -131,19 +170,24 @@ void appAudio() {
 
 void appGui() {
 	TickType_t xLastWakeTime;
+	char convBuf[20] = {0};
 
 	//register own handle
 	appGuiHandle = xTaskGetCurrentTaskHandle();
 
 	//wait for appInit to complete
-	while(!ulTaskNotifyWait(1, 10));
+	while(!ulTaskNotifyTake(1, 10));
 
 	//prepare GUI
 
 	//update GUI forever
+	xLastWakeTime = xTaskGetTickCount();
 	while(1) {
 		vTaskDelayUntil(&xLastWakeTime, 100); //every 100ms
-		;
+		oledPutChar('\n', OLED_BLUE);
+		oledPutString(uint2Str(ad5592rGetPin((ad5592rPin_t)(uint8_t)0), 4, convBuf),OLED_BLUE);
+		oledPutChar(' ', OLED_BLUE);
+		oledPutString(uint2Str(ad5592rGetPin((ad5592rPin_t)(uint8_t)1), 4, convBuf),OLED_BLUE);
 	}
 }
 

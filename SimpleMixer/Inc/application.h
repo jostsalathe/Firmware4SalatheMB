@@ -20,6 +20,11 @@
 //includes
 #include "FreeRTOS.h"
 #include "task.h"
+#include <math.h>
+
+#include "fmc.h"
+#include "spi.h"
+#include "tim.h"
 
 #include "ad1938.h"
 #include "ad5592r.h"
@@ -34,7 +39,7 @@
 
 //global variables and defines
 ad1938_HandleTypeDef ad1938Handle;
-#define AUDIO_BUF_SIZE 480
+#define AUDIO_BUF_SIZE 4800
 
 //function prototypes
 void appInit();
