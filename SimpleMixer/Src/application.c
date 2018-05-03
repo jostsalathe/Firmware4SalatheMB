@@ -104,14 +104,21 @@ void appAudio() {
 
 		//handle every sample
 		for (iSamp=0; iSamp<freshOutBufSize/8; ++iSamp) {
-			int iOut;
-			for (iOut=0; iOut<8; ++iOut) {
-				int32_t outSample = 0;
-				int iIn;
-				for (iIn=0; iIn<4; ++iIn) {
-					outSample += freshInBuf[iSamp*4+iOut]/POTS_MAX_VAL*potGetSmoothUI(iOut);
+			int iIn, iOut;
+			int64_t inSample[4];
+
+			//get input samples for t=iSamp
+			for (iIn=0;  iIn<4; ++iIn) {
+				inSample[iIn] = freshInBuf[iSamp*4+iIn];
+			}
+
+			//calculate output samples
+			for (iOut = 0; iOut < 8; ++iOut) {
+				int64_t outSample = 0;
+				for (iIn = 0; iIn < 4; ++iIn) {
+					outSample += inSample[iIn]*ad5592rGetPin();
 				}
-				freshOutBuf[iSamp*8+iOut] = outSample/2
+				freshOutBuf[iSamp * 8 + iOut] = outSample / 2;
 			}
 		}
 		//calculate next set of samples
