@@ -25,6 +25,11 @@
 #define POTS_MAX_VAL 4095
 #define POTS_SMOOTH_N 256 //256 for 80.61ms round trip (choose power of 2!)
 
+extern uint16_t potValues[];
+#ifdef POTS_SMOOTH_N
+extern int32_t potSmoothed[];
+#endif
+
 
 //type definitions
 
