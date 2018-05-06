@@ -363,11 +363,11 @@ void ad5592rUpdatePinModes() {
 }
 
 void ad5592rSetPin(ad5592rPin_t pin, uint16_t val){
-	ad5592rPinValsW[pin.number] = val;
+	ad5592rPinValsW[pin.number%32] = val;
 }
 
 uint16_t ad5592rGetPin(ad5592rPin_t pin){
-	return ad5592rPinValsR[pin.number];
+	return ad5592rPinValsR[pin.number%32];
 }
 
 void ad5592rUpdate(){
