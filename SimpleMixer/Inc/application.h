@@ -41,7 +41,7 @@
 
 //global variables and defines
 ad1938_HandleTypeDef ad1938Handle;
-#define AUDIO_BUF_SIZE 8190
+#define AUDIO_BUF_SIZE 480
 #define AUDIO_RMS_CLIP_DISPLAY
 //#define AUDIO_SHOW_RUNTIME
 

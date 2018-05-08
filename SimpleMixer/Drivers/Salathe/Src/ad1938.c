@@ -188,7 +188,6 @@ void ad1938Setup(ad1938_HandleTypeDef *had1938_) {
 
 	//configure AD1938
 	ad1938WriteReg(AD1938_REG_ADC2,
-//			AD1938_ADC2_LRPULSE | //???
 			AD1938_ADC2_LRMASTER |
 			AD1938_ADC2_4CHFRM |
 			AD1938_ADC2_BMASTER |
@@ -208,13 +207,13 @@ void ad1938Setup(ad1938_HandleTypeDef *had1938_) {
 			AD1938_DAC0_SRATE48 |
 			AD1938_DAC0_SFRMTTDM);
 	ad1938WriteReg(AD1938_REG_CLK1,
-			AD1938_CLK1_ADCPLL | //???
-			AD1938_CLK1_DACPLL); //???
-	ad1938WriteReg(AD1938_REG_CLK0,
-			AD1938_CLK0_IN512 |//???
+			AD1938_CLK1_ADCPLL |
+			AD1938_CLK1_DACPLL);
+/*	ad1938WriteReg(AD1938_REG_CLK0,
+			AD1938_CLK0_IN512 |
 			AD1938_CLK0_OUTXTAL |
 			AD1938_CLK0_PLLXI |
-			AD1938_CLK0_CLKEN);
+			AD1938_CLK0_CLKEN);*/
 }
 
 void ad1938SetVol(uint8_t iDac, uint8_t vol) {
@@ -223,8 +222,15 @@ void ad1938SetVol(uint8_t iDac, uint8_t vol) {
 }
 
 void ad1938Start() {
+	//start SAI and DMA transfers
 	HAL_SAI_Transmit_DMA(had1938->hsaiOut, (uint8_t *) had1938->outBuf, had1938->outBufSize);
 	HAL_SAI_Receive_DMA(had1938->hsaiIn, (uint8_t *) had1938->inBuf, had1938->inBufSize);
+	//enable codec
+	ad1938WriteReg(AD1938_REG_CLK0,
+			AD1938_CLK0_IN512 |
+			AD1938_CLK0_OUTXTAL |
+			AD1938_CLK0_PLLXI |
+			AD1938_CLK0_CLKEN);
 }
 
 void ad1938WaitOnBuffers(
@@ -273,6 +279,12 @@ void ad1938WaitOnBuffers(
 }
 
 void ad1938Stop() {
+	//disable codec
+	ad1938WriteReg(AD1938_REG_CLK0,
+			AD1938_CLK0_IN512 |
+			AD1938_CLK0_OUTXTAL |
+			AD1938_CLK0_PLLXI);
+	//stop SAI and DMA transfers
 	HAL_SAI_DMAStop(had1938->hsaiOut);
 	HAL_SAI_DMAStop(had1938->hsaiIn);
 }
