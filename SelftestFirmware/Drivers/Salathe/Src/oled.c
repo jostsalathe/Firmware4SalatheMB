@@ -197,7 +197,7 @@ void oledSetup(SPI_HandleTypeDef* hspi) {
     oledWriteCmd(OLED_WIDTH-1);				// Column 2
     oledWriteCmd(OLED_HEIGHT-1);			// Row 2
     oledWriteCmd(SSD1331_CMD_DISPLAYON);
-
+    vTaskDelay(1);
 }
 
 void oledSetWindow(uint8_t posX, uint8_t posY, uint8_t sizeX, uint8_t sizeY) {
