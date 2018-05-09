@@ -40,8 +40,8 @@ void appInit() {
 	oledFillScreen(OLED_WHITE);
 
 	buttonSetup();
-	encSetup(&htim3, 0);
-	encSetup(&htim4, 1);
+//	encSetup(&htim3, 0);
+//	encSetup(&htim4, 1);
 	potsSetup(&hadc1);
 
 	termPutString("\r\rbooting... \r");
@@ -63,21 +63,28 @@ void appInit() {
 	else termPutString("ERROR: appInit can't see appGui and therefore won't wake it up!\r");
 }
 
-#define LOG_SMOOTH_N 50
+#define LOG_SMOOTH_N 256
 #define LOG_SMOOTH_NS_PER_TICK 10
-void logSmoothedRuntime(uint32_t ticks) {
+void logSmoothedRuntime(uint32_t ticks) { //a value of 0 prints the current average instead
+	static __IO int lock = 0;
 	static int i = 0;
 	static uint32_t ticksBuf[LOG_SMOOTH_N] = {0};
+	static uint64_t tickSum = 0;
 
-	ticksBuf[i] = ticks;
+	// thread safety
+	if (lock) return;
 
-	if (++i>=LOG_SMOOTH_N) {
+	if (ticks) { //save new value
+		ticksBuf[i%LOG_SMOOTH_N] = ticks;
+		tickSum = tickSum
+				- ticksBuf[(i+1)%LOG_SMOOTH_N]
+				+ ticksBuf[i%LOG_SMOOTH_N];
+		++i;
+	} else { //print average
 		char convBuf[20] = {0};
 		uint64_t nsSmooth = 0;
-		for (i=0; i<LOG_SMOOTH_N; ++i) {
-			nsSmooth += ticksBuf[i];
-		}
-		nsSmooth *= LOG_SMOOTH_NS_PER_TICK;
+		lock = 1;
+		nsSmooth = tickSum * LOG_SMOOTH_NS_PER_TICK;
 		nsSmooth /= LOG_SMOOTH_N;
 		termPutString(uint2Str((nsSmooth/1000/1000/1000)%1000, 3, convBuf));
 		termPutChar(',');
@@ -87,7 +94,7 @@ void logSmoothedRuntime(uint32_t ticks) {
 		termPutChar(',');
 		termPutString(uint2Str(nsSmooth%1000, 3, convBuf));
 		termPutString("ms\n");
-		i = 0;
+		lock = 0;
 	}
 }
 
@@ -282,7 +289,6 @@ void appAudio() {
 		ad5592rUpdate();
 		arm_shift_q15((q15_t *) ad5592rPinValsR, 3, iGains, 32);
 		arm_q15_to_float(iGains, fGains, 32);
-//		arm_scale_f32(fGains, 8.0, fGains, 32); //und nochmal 8.0/POTS_SMOOTH_N für die potis
 
 		//handle every sample
 		for (i=0; i<freshOutBufSize/8; ++i) {
@@ -302,7 +308,7 @@ void appAudio() {
 			if (muteOut[i]){
 				leds[i].green = 0;
 				leds[i].red = 0;
-				leds[i].blue = 63;
+				leds[i].blue = 64;
 			} else {
 				//calculate rms
 				rms[i] = rms[i]/(freshOutBufSize/8);
@@ -357,8 +363,8 @@ void appGui() {
 			}
 		}
 
-		// update OLED every 100ms
 		if (++loopCnt==100) {
+			// update OLED every 100ms
 			// count pot section (i=-1) and every ad5592r chip (i=0...3)
 			for (i=-1; i<4; ++i) {
 				int32_t j;
@@ -377,6 +383,11 @@ void appGui() {
 					oledDrawRectangel(j*12, (i<0)?(0):(16+i*12), 12, 12, 0, color);
 				}
 			}
+
+#ifdef AUDIO_SHOW_RUNTIME
+			// also update run time measurements
+			logSmoothedRuntime(0);
+#endif
 
 			//reset counter
 			loopCnt = 0;
