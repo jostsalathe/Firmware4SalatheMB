@@ -373,6 +373,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 		}
 	}
 	ad5592rUpdate();
+	ad5592rUpdate();
 	//read pins and compare to written
 	ad5592rUpdate();
 	termPutString(" digital high");
@@ -395,6 +396,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 			ad5592rSetPin(pin, 0);
 		}
 	}
+	ad5592rUpdate();
 	ad5592rUpdate();
 	//read pins and compare to written
 	ad5592rUpdate();
@@ -427,6 +429,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 		}
 	}
 	ad5592rUpdate();
+	ad5592rUpdate();
 	//read ADCs and compare to written DAC
 	ad5592rUpdate();
 	termPutString(" analog max   ");
@@ -448,6 +451,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 		}
 	}
 	ad5592rUpdate();
+	ad5592rUpdate();
 	//read ADCs and compare to written DAC
 	ad5592rUpdate();
 	termPutString(" analog min   ");
@@ -468,6 +472,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 			ad5592rSetPin(pin, 0x800);
 		}
 	}
+	ad5592rUpdate();
 	ad5592rUpdate();
 	//read ADCs and compare to written DAC
 	ad5592rUpdate();

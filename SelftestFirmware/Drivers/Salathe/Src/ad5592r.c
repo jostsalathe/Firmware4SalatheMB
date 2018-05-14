@@ -387,7 +387,7 @@ void ad5592rUpdate(){
 				cmdMsg.cmd.addr = AD5592R_REG_GPI_PINS;
 				cmdMsg.cmd.data = AD5592R_RDBK_GPI | ad5592rGPIpins[chip];
 				//send GPI readback command
-				AD5592R_SELECT(0);
+				AD5592R_SELECT(chip);
 				AD5592R_SPI_WRITE(cmdMsg.reg);
 				//prepare digital output data or nop
 				if (ad5592rGPOpins[chip]) {
@@ -404,7 +404,7 @@ void ad5592rUpdate(){
 				}
 				//wait for transmission complete
 				while (AD5592R_SPI_BUSY) vTaskDelay(0);
-				AD5592R_DESELECT(0);
+				AD5592R_DESELECT(chip);
 				AD5592R_SPI_READ(dacMsg.reg);
 
 				//send prepared command (digital output data or nop) and receive digital input data
