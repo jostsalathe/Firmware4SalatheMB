@@ -403,7 +403,7 @@ void ad5592rUpdate(){
 					cmdMsg.reg = 0; //nop
 				}
 				//wait for transmission complete
-				while (AD5592R_SPI_BUSY) vTaskDelay(0);
+				while (AD5592R_SPI_BUSY);
 				AD5592R_DESELECT(chip);
 				AD5592R_SPI_READ(dacMsg.reg);
 
@@ -469,14 +469,11 @@ void ad5592rUpdate(){
 }
 
 ad5592rReg_t ad5592rTxRxReg(uint8_t chip, ad5592rReg_t reg) {
-	if (!AD5592R_CHIP_ACTIVE(chip)) {
-		reg.reg = 0;
-		return reg;
-	}
 	AD5592R_SELECT(chip);
 	AD5592R_SPI_WRITE(reg.reg);
-	while (AD5592R_SPI_BUSY) vTaskDelay(0);
+	while (AD5592R_SPI_BUSY);
 	AD5592R_DESELECT(chip);
 	AD5592R_SPI_READ(reg.reg);
 	return reg;
 }
+

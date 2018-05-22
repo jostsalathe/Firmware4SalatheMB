@@ -28,10 +28,10 @@ uint64_t ad5592rBenchmark(SPI_HandleTypeDef *hspi, ad5592rPinMode_t pinMode) {
 	uint32_t tickCnt;
 
 	//setup only the first AD5592R and return 0 if CHIP0 could not be initialized successfully
-	if (!ad5592rSetup(hspi, AD5592R_CHIP0_ACTIVE)) return 0;
+	if (!ad5592rSetup(hspi, 0xf)) return 0;
 
 	//set pin modes and values
-	for (n=0; n<8; ++n) {
+	for (n=0; n<32; ++n) {
 		ad5592rSetPinMode((ad5592rPin_t) (uint8_t) n, pinMode);
 		ad5592rSetPin((ad5592rPin_t) (uint8_t) n, 0x800);
 	}
@@ -59,8 +59,8 @@ uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi) {
 	return ad5592rBenchmark(hspi, ad5592rDigitalOut);
 }
 
-uint64_t ad5592rBenchmarkDAC(SPI_HandleTypeDef *hspi) {
-	return ad5592rBenchmark(hspi, ad5592rAnalogOut);
+uint64_t ad5592rBenchmarkADC(SPI_HandleTypeDef *hspi) {
+	return ad5592rBenchmark(hspi, ad5592rAnalogIn);
 }
 
 uint64_t sdramBenchmarkWrite() {

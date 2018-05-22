@@ -66,6 +66,7 @@
 /* USER CODE BEGIN Includes */
 #include "oled.h"
 #include "term.h"
+#include "benchmarks.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -99,6 +100,12 @@ int main(void)
 
   /* USER CODE END 1 */
 
+  /* Enable I-Cache-------------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache-------------------------------------------------------------*/
+  SCB_EnableDCache();
+
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -131,7 +138,21 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+/*
+  termSetup(&huart1);
+  sdCardSetup();
+	while(1) {
+		char buf[20];
+//		uint64_t result = sdCardBenchmarkReadFatFS();
+		uint64_t result = ad5592rBenchmarkADC(&hspi6);
+//		uint64_t result = sdramBenchmarkWrite();
+		termPutString(uint2Str((uint32_t) (result/(1000*1000)), 8, buf));
+		termPutChar('.');
+		termPutString(uint2Str((uint32_t) (result%(1000*1000)), 6, buf));
+		termPutString("MHz\n");
+//		termPutString("Mbit/s\n");
+	}
+*/
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
