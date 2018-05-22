@@ -41,7 +41,7 @@
 ad1938_HandleTypeDef ad1938Handle;
 #define AUDIO_BUF_SIZE 96
 #define AUDIO_RMS_CLIP_DISPLAY
-#define AUDIO_SHOW_RUNTIME
+//#define AUDIO_SHOW_RUNTIME
 
 //function prototypes
 void appInit();

@@ -27,7 +27,7 @@
 
 extern uint16_t potValues[];
 #ifdef POTS_SMOOTH_N
-extern int32_t potSmoothed[];
+extern uint32_t potSmoothed[];
 #endif
 
 

@@ -22,7 +22,7 @@ uint16_t potValues[POTS_N] = {0};
 
 #ifdef POTS_SMOOTH_N
 uint16_t potValArray[POTS_N][POTS_SMOOTH_N] = {0};
-int32_t potSmoothed[POTS_N] = {0};
+uint32_t potSmoothed[POTS_N] = {0};
 uint32_t potValInd = 0;
 #endif /*POTS_SMOOTH_N*/
 
