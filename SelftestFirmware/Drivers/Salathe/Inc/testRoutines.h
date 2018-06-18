@@ -36,7 +36,7 @@
 //function prototypes
 int testSDRAM(SDRAM_HandleTypeDef *hsdram);
 int testSDCARD();
-int testAD5592R(SPI_HandleTypeDef *hspi);
-void demoAD5592R(SPI_HandleTypeDef *hspi);
+int testAD5592R(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim);
+void demoAD5592R(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim);
 
 #endif /*_TESTROUTINES_H*/

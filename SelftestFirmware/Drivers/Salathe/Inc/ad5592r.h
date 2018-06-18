@@ -124,7 +124,7 @@ typedef enum {
 
 //function prototypes
 //initial setup of all AD5592Rs
-uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips);
+uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, uint8_t activeChips);
 //select mode of one pin locally
 void ad5592rSetPinMode(ad5592rPin_t pin, ad5592rPinMode_t mode);
 //send all pin mode changes to AD5592Rs

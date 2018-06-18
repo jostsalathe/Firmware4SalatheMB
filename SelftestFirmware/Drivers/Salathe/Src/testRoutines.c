@@ -318,7 +318,7 @@ int testSDCARD() {
 	return res;
 }
 
-int testAD5592R(SPI_HandleTypeDef *hspi) {
+int testAD5592R(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim) {
 	ad5592rPin_t pin;
 	char str[11] = {0};
 	uint8_t chipStatus; // [0:3]=chipActive, [4:7]=chipIOfault
@@ -330,7 +330,7 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 	oledPutString("AD5592R: ", OLED_GREEN);
 	termPutString("\r-- testing AD5592Rs --\rSPI response test yields:\r");
 
-	chipStatus = ad5592rSetup(hspi, chipStatus);
+	chipStatus = ad5592rSetup(hspi, htim, chipStatus);
 	for (pin.number = 0; pin.number < 32; pin.number += 8) {
 		termPutString(" AD5592R chip ");
 		termPutString(uint2Str(pin.chip, 1, str));
@@ -524,11 +524,11 @@ int testAD5592R(SPI_HandleTypeDef *hspi) {
 	return (int) chipStatus;
 }
 
-void demoAD5592R(SPI_HandleTypeDef *hspi) {
+void demoAD5592R(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim) {
 	TickType_t xLastWakeTime;
 	ad5592rPin_t pin;
 
-	ad5592rSetup(hspi, AD5592R_CHIP0_ACTIVE);
+	ad5592rSetup(hspi, htim, AD5592R_CHIP0_ACTIVE);
 	pin.number = 0; //sine output
 	ad5592rSetPinMode(pin, ad5592rAnalogOut);
 	pin.number = 1; //analog test input

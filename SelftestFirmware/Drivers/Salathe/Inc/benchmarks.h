@@ -28,9 +28,9 @@
 
 //function declarations
 // tests the maximum sample rate when configuring all pins of CHIP0 as digital output (returns sample rate in Hz)
-uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi);
+uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim);
 // tests the maximum sample rate when configuring all pins of CHIP0 as analog output (returns sample rate in Hz)
-uint64_t ad5592rBenchmarkADC(SPI_HandleTypeDef *hspi);
+uint64_t ad5592rBenchmarkADC(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim);
 // test the writing transfer rate of the SDRAM (returns transfer rate in bit/s)
 uint64_t sdramBenchmarkWrite();
 // test the reading transfer rate of the SDRAM (returns transfer rate in bit/s)

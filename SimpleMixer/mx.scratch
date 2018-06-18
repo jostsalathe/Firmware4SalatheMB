@@ -32,7 +32,7 @@
     <usedDebug>true</usedDebug>
     	<debugprobe>swd</debugprobe>
     <optimization>6</optimization>
-    <icfloc>1</icfloc>
+    <icfloc>2</icfloc>
     <Adefines>
         <define></define>
     </Adefines>   

@@ -100,12 +100,6 @@ int main(void)
 
   /* USER CODE END 1 */
 
-  /* Enable I-Cache-------------------------------------------------------------*/
-  SCB_EnableICache();
-
-  /* Enable D-Cache-------------------------------------------------------------*/
-  SCB_EnableDCache();
-
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -137,6 +131,7 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 /*
   termSetup(&huart1);

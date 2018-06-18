@@ -23,7 +23,7 @@ void appInit() {
 	led_t leds[LEDS_N];
 	uint32_t i = 0;
 
-	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
+	ad5592rSetup(&hspi6, &htim6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
 	buttonSetup();
 	encSetup(&htim3, 0);
 	encSetup(&htim4, 1);
@@ -56,7 +56,7 @@ void appInit() {
 	oledClear();
 
 	termPutString("\r--- testing peripherals ---\r");
-	testAD5592R(&hspi6);
+	testAD5592R(&hspi6, &htim6);
 	testSDCARD();
 	testSDRAM(&hsdram1);
 

@@ -215,7 +215,7 @@ void mixAudioFrameM(ad1938SampleType *inSamples	//pointer to the 4 input samples
 	arm_q31_to_float(inSamples, dataIn, 4);
 	arm_mat_mult_f32(&matIn, &matGain, &matInter);
 
-	arm_shift_q31(potSmoothed, 11, potIn, 8);
+	arm_shift_q31((int32_t*) potSmoothed, 11, potIn, 8);
 	arm_q31_to_float(potIn, dataPot, 8);
 	arm_mult_f32(dataInter, dataPot, dataOut, 8);
 
@@ -251,7 +251,7 @@ void appAudio() {
 
 	//initialize ad1938 and related peripherals
 	ad1938Setup(&ad1938Handle);
-	ad5592rSetup(&hspi6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
+	ad5592rSetup(&hspi6, &htim6, AD5592R_CHIP0_ACTIVE | AD5592R_CHIP1_ACTIVE | AD5592R_CHIP2_ACTIVE | AD5592R_CHIP3_ACTIVE);
 	for (pin.number=0; pin.number<32; ++pin.number) {
 		ad5592rSetPinMode(pin, ad5592rAnalogIn);
 	}

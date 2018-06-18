@@ -22,13 +22,13 @@
 #define BENCHMARK_SDCARD_BUFFERS_PER_FILE 3000 //number of times the buffer gets written to one file (choose multiple of 1000)
 
 //functions
-uint64_t ad5592rBenchmark(SPI_HandleTypeDef *hspi, ad5592rPinMode_t pinMode) {
+uint64_t ad5592rBenchmark(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, ad5592rPinMode_t pinMode) {
 	//variable declarations
 	uint64_t n;
 	uint32_t tickCnt;
 
 	//setup only the first AD5592R and return 0 if CHIP0 could not be initialized successfully
-	if (!ad5592rSetup(hspi, 0xf)) return 0;
+	if (!ad5592rSetup(hspi, htim, 0xf)) return 0;
 
 	//set pin modes and values
 	for (n=0; n<32; ++n) {
@@ -55,12 +55,12 @@ uint64_t ad5592rBenchmark(SPI_HandleTypeDef *hspi, ad5592rPinMode_t pinMode) {
 	return n/BENCHMARK_DURATION;
 }
 
-uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi) {
-	return ad5592rBenchmark(hspi, ad5592rDigitalOut);
+uint64_t ad5592rBenchmarkGPO(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim) {
+	return ad5592rBenchmark(hspi, htim, ad5592rDigitalOut);
 }
 
-uint64_t ad5592rBenchmarkADC(SPI_HandleTypeDef *hspi) {
-	return ad5592rBenchmark(hspi, ad5592rAnalogIn);
+uint64_t ad5592rBenchmarkADC(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim) {
+	return ad5592rBenchmark(hspi, htim, ad5592rAnalogIn);
 }
 
 uint64_t sdramBenchmarkWrite() {

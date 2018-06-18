@@ -18,12 +18,16 @@
 
 //variable definitions
 SPI_HandleTypeDef *hspiAD5592R;
+TIM_HandleTypeDef *htimAD5592R;
 uint8_t ad5592rChipsActive = 0;
 uint32_t ad5592rCsMask[/*4*/] = {SPI6_CS_0_Pin<<16, SPI6_CS_1_Pin<<16, SPI6_CS_2_Pin<<16, SPI6_CS_3_Pin<<16};
 uint32_t ad5592rNcsMask[/*4*/] = {SPI6_CS_0_Pin, SPI6_CS_1_Pin, SPI6_CS_2_Pin, SPI6_CS_3_Pin};
 __IO uint32_t* ad5592rCsRegs[/*4*/] = {&(SPI6_CS_0_GPIO_Port->BSRR), &(SPI6_CS_1_GPIO_Port->BSRR), &(SPI6_CS_2_GPIO_Port->BSRR), &(SPI6_CS_3_GPIO_Port->BSRR)};
 __IO uint16_t* ad5592rSpiDR;
 __IO uint32_t* ad5592rSpiSR;
+__IO uint32_t* timCnt;
+#define TIM_NS_PER_TICK 10
+#define TIM_TICKS_FOR_ADC_TRACK (20/TIM_NS_PER_TICK)	// 500ns delay to track the input signal
 
 uint16_t ad5592rTRIpins[4] = {0,0,0,0};
 uint16_t ad5592rGPIpins[4] = {0,0,0,0};
@@ -165,16 +169,19 @@ uint16_t ad5592rSine[AD5592R_N_SINE] = {
 };
 
 //functions
-uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, uint8_t activeChips) {
+uint8_t ad5592rSetup(SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, uint8_t activeChips) {
 	int i;
 	ad5592rChipsActive = activeChips & 0xF;
 	hspiAD5592R = hspi;
+	htimAD5592R = htim;
+	timCnt = &(htim->Instance->CNT);
 	ad5592rSpiDR = (uint16_t *) &(hspi->Instance->DR);
 	ad5592rSpiSR = &(hspi->Instance->SR);
 	for (i=0; i<4; ++i) {
 		AD5592R_DESELECT(i);
 	}
 	__HAL_SPI_ENABLE(hspi);
+	HAL_TIM_Base_Start(htim);
 	//flush the SPI RXFIFO
 	AD5592R_SPI_READ(ad5592rPinValsR[0]);
 	AD5592R_SPI_READ(ad5592rPinValsR[0]);
@@ -370,6 +377,12 @@ uint16_t ad5592rGetPin(ad5592rPin_t pin){
 	return ad5592rPinValsR[pin.number%32];
 }
 
+inline void ad5592rAdcTrackDelay() {
+	//delay for the ADC to track the input signal
+	*timCnt = 0;
+	while(*timCnt < TIM_TICKS_FOR_ADC_TRACK);
+}
+
 void ad5592rUpdate(){
 	int chip, pin, iAdc, nAdc;
 	ad5592rReg_t cmdMsg, dacMsg;
@@ -432,6 +445,7 @@ void ad5592rUpdate(){
 					cmdMsg.cmd.addr = AD5592R_REG_ADC_SEQ;
 					cmdMsg.cmd.data = ad5592rADCpins[chip];
 					cmdMsg = ad5592rTxRxReg(chip, cmdMsg);
+					ad5592rAdcTrackDelay();
 					iAdc = -1; //for reading rubbish data once
 				}
 			}
@@ -447,8 +461,11 @@ void ad5592rUpdate(){
 						cmdMsg = ad5592rTxRxReg(chip, dacMsg);
 
 						//treat received data
-						if (iAdc<nAdc && iAdc>=0) { //to skip first rx after starting ADC sequence
-							ad5592rPinValsR[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
+						if (iAdc<nAdc) {
+							ad5592rAdcTrackDelay();
+							if (iAdc>=0) { //to skip first rx after starting ADC sequence
+								ad5592rPinValsR[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
+							}
 						}
 						++iAdc;
 					}
@@ -458,6 +475,7 @@ void ad5592rUpdate(){
 			while (iAdc<nAdc) {
 				//receive data via nop
 				cmdMsg = ad5592rTxRxReg(chip, dacMsg);
+				ad5592rAdcTrackDelay();
 				//treat received data
 				if (iAdc>=0) { //to skip first rx after starting ADC sequence
 					ad5592rPinValsR[chip*8+cmdMsg.dacWrite.addr] = cmdMsg.dacWrite.data;
