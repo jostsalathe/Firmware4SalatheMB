@@ -51,15 +51,15 @@ void appInit() {
 	termPutString("platform for developing digital\r");
 	termPutString("     synthesizer modules\r");
 
-	vTaskDelay(1000);
+//	vTaskDelay(1000);
 
 	oledClear();
 
 	termPutString("\r--- testing peripherals ---\r");
-	testAD5592R(&hspi6, &htim6);
+/*	testAD5592R(&hspi6, &htim6);
 	testSDCARD();
 	testSDRAM(&hsdram1);
-
+*/
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
 
@@ -95,9 +95,11 @@ void appAudio() {
 	for (i=0; i<bufSize; ++i) {
 		int j;
 		for (j=0; j<8; ++j) {
-			(ad1938Handle.outBuf)[i*8+j] = (ad1938SampleType) iSamp;
+//			(ad1938Handle.outBuf)[i*8+j] = (ad1938SampleType) iSamp;
+			(ad1938Handle.outBuf)[i*8+j] = (ad1938SampleType) ad5592rSine[iSamp]<<16;
 		}
-		if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
+//		if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
+		if((iSamp+=4)>=1000) iSamp=0;
 	}
 
 	//start the DMA transfers for audio streaming
@@ -109,14 +111,17 @@ void appAudio() {
 		ad1938WaitOnBuffers(&freshInBuf, &freshInBufSize, &freshOutBuf, &freshOutBufSize);
 		for (i=0; i<freshOutBufSize/8; ++i) {
 			int j;
-			ad1938SampleType sample = (ad1938SampleType) iSamp;
+//			ad1938SampleType sample = (ad1938SampleType) iSamp;
+			ad1938SampleType sample = (ad1938SampleType) ad5592rSine[iSamp]<<16;
 			for (j=0; j<4; ++j) {
 				freshOutBuf[i*8+j] = freshInBuf[i*4+j]/POTS_MAX_VAL*potGetSmoothUI(j);
+				freshOutBuf[i*8+j+4] = freshInBuf[i*4+j]/POTS_MAX_VAL*potGetSmoothUI(j);
 			}
 			for (j=4; j<8; ++j) {
-				freshOutBuf[i*8+j] = (ad1938SampleType) sample/POTS_MAX_VAL*potGetSmoothUI(j);
+//				freshOutBuf[i*8+j] = (ad1938SampleType) sample/POTS_MAX_VAL*potGetSmoothUI(j);
 			}
-			if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
+//			if((iSamp+=2000000)>=2000000000) iSamp=-2000000000;
+			if((iSamp+=4)>=1000) iSamp=0;
 		}
 		//calculate next set of samples
 		//but do nothing in this demo - sine wave stays the same

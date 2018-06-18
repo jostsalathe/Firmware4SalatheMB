@@ -27,7 +27,7 @@ __IO uint16_t* ad5592rSpiDR;
 __IO uint32_t* ad5592rSpiSR;
 __IO uint32_t* timCnt;
 #define TIM_NS_PER_TICK 10
-#define TIM_TICKS_FOR_ADC_TRACK (20/TIM_NS_PER_TICK)	// 500ns delay to track the input signal
+#define TIM_TICKS_FOR_ADC_TRACK (4000/TIM_NS_PER_TICK)	// 500ns delay to track the input signal
 
 uint16_t ad5592rTRIpins[4] = {0,0,0,0};
 uint16_t ad5592rGPIpins[4] = {0,0,0,0};

@@ -145,52 +145,24 @@ void ad1938WriteReg(uint8_t regAddr, uint8_t regVal) {
 	buf[1] = regAddr;
 	buf[2] = regVal;
 
-	//possibly store previous SPI configuration
-/*	prevSpiInit = had1938->hspi->Init;
-
-	//possibly reconfigure SPI here
-	had1938->hspi->Init = had1938->spiInit;
-	if (HAL_SPI_Init(had1938->hspi) != HAL_OK)
-	{
-		_Error_Handler(__FILE__, __LINE__);
-	}
-*/
 	AD1938_SELECT(had1938->csIndex?1:0);
 	HAL_SPI_Transmit(had1938->hspi, buf, 3, 10);
 	AD1938_DESELECT(had1938->csIndex?1:0);
-
-	//possibly restore previous SPI configuration
-/*	had1938->hspi->Init = prevSpiInit;
-	if (HAL_SPI_Init(had1938->hspi) != HAL_OK)
-	{
-		_Error_Handler(__FILE__, __LINE__);
-	}*/
 }
 
 void ad1938Setup(ad1938_HandleTypeDef *had1938_) {
 	had1938 = had1938_;
 
-	//prepare SPI alternate configuration
-/*	had1938->spiInit.Mode = SPI_MODE_MASTER;
-	had1938->spiInit.Direction = SPI_DIRECTION_2LINES;
-	had1938->spiInit.DataSize = SPI_DATASIZE_8BIT;
-	had1938->spiInit.CLKPolarity = SPI_POLARITY_LOW;	//changed!
-	had1938->spiInit.CLKPhase = SPI_PHASE_1EDGE;	//changed!
-	had1938->spiInit.NSS = SPI_NSS_SOFT;
-	had1938->spiInit.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
-	had1938->spiInit.FirstBit = SPI_FIRSTBIT_MSB;
-	had1938->spiInit.TIMode = SPI_TIMODE_DISABLE;
-	had1938->spiInit.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-	had1938->spiInit.CRCPolynomial = 7;
-	had1938->spiInit.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-	had1938->spiInit.NSSPMode = SPI_NSS_PULSE_DISABLE;*/
 	AD1938_DESELECT(had1938->csIndex?1:0);
+
+	//reduce active slots on ADC line to the first four of eight slots
+	HAL_SAI_DeInit(had1938->hsaiIn);
+	had1938->hsaiIn->SlotInit.SlotActive = SAI_SLOTACTIVE_0 | SAI_SLOTACTIVE_1 | SAI_SLOTACTIVE_2 | SAI_SLOTACTIVE_3;
+	HAL_SAI_Init(had1938->hsaiIn);
 
 	//configure AD1938
 	ad1938WriteReg(AD1938_REG_ADC2,
-			AD1938_ADC2_LRMASTER |
-			AD1938_ADC2_4CHFRM |
-			AD1938_ADC2_BMASTER |
+			AD1938_ADC2_8CHFRM |
 			AD1938_ADC2_BCLKINT);
 	ad1938WriteReg(AD1938_REG_ADC1,
 			AD1938_ADC1_SFRMTTDM);
@@ -209,11 +181,6 @@ void ad1938Setup(ad1938_HandleTypeDef *had1938_) {
 	ad1938WriteReg(AD1938_REG_CLK1,
 			AD1938_CLK1_ADCPLL |
 			AD1938_CLK1_DACPLL);
-/*	ad1938WriteReg(AD1938_REG_CLK0,
-			AD1938_CLK0_IN512 |
-			AD1938_CLK0_OUTXTAL |
-			AD1938_CLK0_PLLXI |
-			AD1938_CLK0_CLKEN);*/
 }
 
 void ad1938SetVol(uint8_t iDac, uint8_t vol) {
