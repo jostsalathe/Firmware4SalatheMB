@@ -56,10 +56,10 @@ void appInit() {
 	oledClear();
 
 	termPutString("\r--- testing peripherals ---\r");
-/*	testAD5592R(&hspi6, &htim6);
+	testAD5592R(&hspi6, &htim6);
 	testSDCARD();
 	testSDRAM(&hsdram1);
-*/
+
 	ledSet(leds);
 	termPutString("\r--- peripherals check done ---\r");
 
