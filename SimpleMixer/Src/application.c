@@ -24,18 +24,9 @@ uint8_t muteOut[8] = {0};
 //function implementations
 
 void appInit() {
-	led_t leds[LEDS_N];
-	uint32_t i = 0;
-
+	ledSetup(&hspi4);
 	termSetup(&huart1);
 	sdramSetup(&hsdram1);
-	ledSetup(&hspi4);
-	for (i = 0; i < LEDS_N; ++i) {
-		leds[i].red = 0;
-		leds[i].green = 0;
-		leds[i].blue = 0;
-	}
-	ledSet(leds);
 	oledSetup(&hspi1);
 	oledFillScreen(OLED_WHITE);
 

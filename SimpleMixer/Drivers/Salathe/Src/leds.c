@@ -27,6 +27,7 @@ void ledSetup(SPI_HandleTypeDef *hspi){
 	uint8_t i;
 	hspiLED = hspi;
 	for(i=0; i<LEDS_SDATA_N; ++i) LEDsData[i] = 0;
+	for(i=0; i<LEDS_DATA_N*4; ++i) LEDsData[i+LEDS_PREDATA] = LEDS_BitTimings[0];
 	HAL_SPI_Transmit_DMA(hspiLED, LEDsData, LEDS_SDATA_N);
 }
 
